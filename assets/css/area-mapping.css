@@ -1,0 +1,40 @@
+/* Area Mapping Styles */
+.location-marker {
+	z-index: 10;
+	transition: all 0.2s ease;
+}
+
+.marker-pin {
+	text-align: center;
+	cursor: pointer;
+	transition: all 0.2s ease;
+}
+
+.marker-pin:hover {
+	transform: scale(1.1);
+}
+
+.marker-label {
+	display: block;
+	background: rgba(0, 0, 0, 0.7);
+	color: white;
+	padding: 2px 6px;
+	border-radius: 3px;
+	font-size: 10px;
+	margin-top: 2px;
+	white-space: nowrap;
+}
+
+#selectedArea {
+	transition: all 0.3s ease;
+	box-shadow: 0 0 15px rgba(0, 123, 255, 0.5);
+}
+
+#areaMapping:hover {
+	cursor: crosshair;
+}
+
+.area-info {
+	font-size: 0.8rem;
+	color: #6c757d;
+}
