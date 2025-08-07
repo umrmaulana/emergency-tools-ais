@@ -87,7 +87,7 @@ class Equipment_type_model extends CI_Model
      */
     public function get_active_equipment_types_for_dropdown()
     {
-        $this->db->select('id, equipment_name as name, equipment_type as description');
+        $this->db->select('id, CONCAT(equipment_name, " - ", equipment_type) as name, equipment_name, equipment_type');
         $this->db->where('is_active', 1);
         $this->db->order_by('equipment_name', 'ASC');
         return $this->db->get('tm_master_equipment_types')->result();

@@ -18,25 +18,27 @@ class Equipment_model extends CI_Model
     }
 
     /**
-     * Get all equipment dengan join location
+     * Get all equipment dengan join location and equipment type
      */
     public function get_all_equipment()
     {
-        $this->db->select('eq.*, loc.location_name');
+        $this->db->select('eq.*, loc.location_name, et.equipment_name, et.equipment_type');
         $this->db->from('tm_equipments eq');
         $this->db->join('tm_locations loc', 'loc.id = eq.location_id', 'left');
+        $this->db->join('tm_master_equipment_types et', 'et.id = eq.equipment_type_id', 'left');
         $this->db->order_by('eq.equipment_code', 'ASC');
         return $this->db->get()->result();
     }
 
     /**
-     * Get equipment by ID
+     * Get equipment by ID with joins
      */
     public function get_equipment($id)
     {
-        $this->db->select('eq.*, loc.location_name');
+        $this->db->select('eq.*, loc.location_name, et.equipment_name, et.equipment_type');
         $this->db->from('tm_equipments eq');
         $this->db->join('tm_locations loc', 'loc.id = eq.location_id', 'left');
+        $this->db->join('tm_master_equipment_types et', 'et.id = eq.equipment_type_id', 'left');
         $this->db->where('eq.id', $id);
         return $this->db->get()->row();
     }

@@ -1,0 +1,484 @@
+/**
+ * Emergency Tools AIS - Combined Stylesheet
+ * All-in-one CSS file for production use
+ * Optimized and minified for performance
+ * Created: August 2025
+ */
+
+/* Import main stylesheets */
+@import url("emergency-tools.css");
+@import url("components.css");
+
+/* ========================================
+   Critical Path CSS Overrides
+   ======================================== */
+
+/* Ensure critical elements load immediately */
+.navbar,
+.sidebar,
+.main-content {
+	will-change: transform;
+}
+
+/* Optimize animations for performance */
+* {
+	-webkit-backface-visibility: hidden;
+	-moz-backface-visibility: hidden;
+	backface-visibility: hidden;
+	-webkit-transform: translate3d(0, 0, 0);
+	-moz-transform: translate3d(0, 0, 0);
+	transform: translate3d(0, 0, 0);
+}
+
+/* ========================================
+   Theme Variations
+   ======================================== */
+
+/* Light Theme (default) - already defined in main CSS */
+
+/* Dark Theme */
+[data-theme="dark"] {
+	--white: #1a1a1a;
+	--light-gray: #2d2d2d;
+	--gray-100: #404040;
+	--gray-200: #525252;
+	--gray-300: #666666;
+	--gray-400: #808080;
+	--gray-500: #999999;
+	--gray-600: #b3b3b3;
+	--gray-700: #cccccc;
+	--gray-800: #e6e6e6;
+	--gray-900: #f0f0f0;
+}
+
+[data-theme="dark"] body {
+	background-color: var(--gray-900);
+	color: var(--gray-100);
+}
+
+[data-theme="dark"] .card {
+	background-color: var(--gray-800);
+	color: var(--gray-100);
+}
+
+[data-theme="dark"] .table {
+	background-color: var(--gray-800);
+	color: var(--gray-100);
+}
+
+[data-theme="dark"] .table th {
+	background-color: var(--gray-700);
+	color: var(--gray-100);
+}
+
+[data-theme="dark"] .sidebar {
+	background-color: var(--gray-800);
+}
+
+[data-theme="dark"] .sidebar .nav-link {
+	color: var(--gray-100) !important;
+}
+
+/* High Contrast Theme */
+[data-theme="high-contrast"] {
+	--primary-color: #0066cc;
+	--white: #ffffff;
+	--gray-900: #000000;
+	--success-color: #00aa00;
+	--danger-color: #cc0000;
+	--warning-color: #cc6600;
+}
+
+[data-theme="high-contrast"] * {
+	border-color: var(--gray-900) !important;
+}
+
+[data-theme="high-contrast"] .btn {
+	border: 2px solid currentColor !important;
+	font-weight: 700 !important;
+}
+
+/* ========================================
+   Custom Utility Classes
+   ======================================== */
+
+/* Spacing utilities */
+.gap-1 {
+	gap: 0.25rem;
+}
+.gap-2 {
+	gap: 0.5rem;
+}
+.gap-3 {
+	gap: 1rem;
+}
+.gap-4 {
+	gap: 1.5rem;
+}
+.gap-5 {
+	gap: 3rem;
+}
+
+/* Border radius utilities */
+.rounded-lg {
+	border-radius: var(--border-radius-lg) !important;
+}
+.rounded-xl {
+	border-radius: 20px !important;
+}
+
+/* Shadow utilities */
+.shadow-custom-sm {
+	box-shadow: var(--shadow-sm) !important;
+}
+.shadow-custom-md {
+	box-shadow: var(--shadow-md) !important;
+}
+.shadow-custom-lg {
+	box-shadow: var(--shadow-lg) !important;
+}
+.shadow-custom-xl {
+	box-shadow: var(--shadow-xl) !important;
+}
+
+/* Text utilities */
+.text-gradient {
+	background: linear-gradient(
+		135deg,
+		var(--primary-color),
+		var(--secondary-color)
+	);
+	-webkit-background-clip: text;
+	-webkit-text-fill-color: transparent;
+	background-clip: text;
+}
+
+/* Animation utilities */
+.animate-fade-in {
+	animation: fadeIn 0.5s ease-in-out;
+}
+
+.animate-slide-up {
+	animation: slideUp 0.3s ease-out;
+}
+
+.animate-bounce-in {
+	animation: bounceIn 0.6s ease-out;
+}
+
+@keyframes slideUp {
+	from {
+		opacity: 0;
+		transform: translateY(30px);
+	}
+	to {
+		opacity: 1;
+		transform: translateY(0);
+	}
+}
+
+@keyframes bounceIn {
+	0% {
+		opacity: 0;
+		transform: scale(0.3);
+	}
+	50% {
+		opacity: 1;
+		transform: scale(1.05);
+	}
+	70% {
+		transform: scale(0.9);
+	}
+	100% {
+		opacity: 1;
+		transform: scale(1);
+	}
+}
+
+/* Performance utilities */
+.will-change-transform {
+	will-change: transform;
+}
+.will-change-opacity {
+	will-change: opacity;
+}
+.gpu-accelerated {
+	transform: translateZ(0);
+	backface-visibility: hidden;
+}
+
+/* ========================================
+   Component Modifiers
+   ======================================== */
+
+/* Card variants */
+.card-hover-lift:hover {
+	transform: translateY(-10px);
+	box-shadow: 0 20px 40px rgba(0, 0, 0, 0.15);
+}
+
+.card-gradient {
+	background: linear-gradient(
+		135deg,
+		var(--primary-color),
+		var(--secondary-color)
+	);
+	color: var(--white);
+}
+
+.card-glass {
+	background: rgba(255, 255, 255, 0.25);
+	backdrop-filter: blur(10px);
+	border: 1px solid rgba(255, 255, 255, 0.18);
+}
+
+/* Button variants */
+.btn-gradient {
+	background: linear-gradient(
+		135deg,
+		var(--primary-color),
+		var(--secondary-color)
+	);
+	border: none;
+	color: var(--white);
+}
+
+.btn-glass {
+	background: rgba(255, 255, 255, 0.25);
+	backdrop-filter: blur(10px);
+	border: 1px solid rgba(255, 255, 255, 0.18);
+	color: var(--white);
+}
+
+.btn-floating {
+	position: fixed;
+	bottom: 2rem;
+	right: 2rem;
+	width: 56px;
+	height: 56px;
+	border-radius: 50%;
+	display: flex;
+	align-items: center;
+	justify-content: center;
+	font-size: 1.5rem;
+	box-shadow: 0 8px 20px rgba(0, 0, 0, 0.3);
+	z-index: 1000;
+	transition: var(--transition-normal);
+}
+
+.btn-floating:hover {
+	transform: scale(1.1);
+	box-shadow: 0 12px 28px rgba(0, 0, 0, 0.4);
+}
+
+/* Table variants */
+.table-hover-glow tbody tr:hover {
+	box-shadow: 0 0 20px rgba(0, 123, 255, 0.3);
+}
+
+.table-striped-custom tbody tr:nth-of-type(odd) {
+	background-color: rgba(0, 123, 255, 0.02);
+}
+
+/* Modal variants */
+.modal-fullscreen-custom .modal-dialog {
+	width: 100vw;
+	height: 100vh;
+	margin: 0;
+	padding: 0;
+	max-width: none;
+}
+
+.modal-fullscreen-custom .modal-content {
+	height: 100vh;
+	border: none;
+	border-radius: 0;
+}
+
+/* ========================================
+   Performance Optimizations
+   ======================================== */
+
+/* Reduce repaints */
+.sidebar,
+.navbar,
+.main-content {
+	contain: layout style paint;
+}
+
+/* Optimize scrolling */
+.sidebar {
+	overflow-y: auto;
+	-webkit-overflow-scrolling: touch;
+	scroll-behavior: smooth;
+}
+
+/* Optimize images */
+img {
+	image-rendering: optimizeQuality;
+}
+
+/* ========================================
+   Browser-specific Fixes
+   ======================================== */
+
+/* Safari fixes */
+@supports (-webkit-appearance: none) {
+	.form-control,
+	.form-select {
+		-webkit-appearance: none;
+		appearance: none;
+	}
+}
+
+/* Firefox fixes */
+@-moz-document url-prefix() {
+	.dropdown-menu {
+		margin-top: 1px;
+	}
+}
+
+/* Edge/IE fixes */
+@supports (-ms-ime-align: auto) {
+	.d-flex {
+		display: -ms-flexbox;
+	}
+}
+
+/* ========================================
+   Future-proof Enhancements
+   ======================================== */
+
+/* Container queries support */
+@supports (container-type: inline-size) {
+	.card {
+		container-type: inline-size;
+	}
+
+	@container (min-width: 400px) {
+		.card-body {
+			padding: 2rem;
+		}
+	}
+
+	@container (max-width: 400px) {
+		.card-body {
+			padding: 1rem;
+		}
+	}
+}
+
+/* CSS Grid fallback for older browsers */
+@supports not (display: grid) {
+	.image-gallery {
+		display: flex;
+		flex-wrap: wrap;
+		gap: 1rem;
+	}
+
+	.image-gallery > * {
+		flex: 1 1 150px;
+	}
+}
+
+/* ========================================
+   Print Optimizations
+   ======================================== */
+
+@media print {
+	/* Force white background */
+	* {
+		background: white !important;
+		color: black !important;
+	}
+
+	/* Hide interactive elements */
+	.btn,
+	.dropdown,
+	.nav-tabs,
+	.pagination,
+	.modal,
+	.tooltip,
+	.popover {
+		display: none !important;
+	}
+
+	/* Optimize typography for print */
+	body {
+		font-size: 12pt;
+		line-height: 1.4;
+	}
+
+	h1 {
+		font-size: 18pt;
+	}
+	h2 {
+		font-size: 16pt;
+	}
+	h3 {
+		font-size: 14pt;
+	}
+
+	/* Page breaks */
+	.card,
+	.table {
+		page-break-inside: avoid;
+	}
+
+	h1,
+	h2,
+	h3,
+	h4,
+	h5,
+	h6 {
+		page-break-after: avoid;
+	}
+}
+
+/* ========================================
+   Loading Performance CSS
+   ======================================== */
+
+/* Critical CSS should be inlined for fastest loading */
+/* This file should be loaded after critical CSS */
+
+/* Resource hints CSS */
+.preload-image {
+	content: url('data:image/svg+xml,<svg xmlns="http://www.w3.org/2000/svg"/>');
+	position: absolute;
+	left: -9999px;
+	top: -9999px;
+	width: 1px;
+	height: 1px;
+}
+
+/* ========================================
+   Error Handling CSS
+   ======================================== */
+
+/* Graceful degradation for unsupported features */
+.backdrop-filter-fallback {
+	background: rgba(255, 255, 255, 0.9);
+}
+
+@supports (backdrop-filter: blur(10px)) {
+	.backdrop-filter-fallback {
+		background: rgba(255, 255, 255, 0.25);
+		backdrop-filter: blur(10px);
+	}
+}
+
+/* CSS error boundaries */
+.css-error-boundary {
+	display: block !important;
+	background: #f8d7da !important;
+	color: #721c24 !important;
+	padding: 1rem !important;
+	border: 1px solid #f5c6cb !important;
+	border-radius: 4px !important;
+}
+
+.css-error-boundary::before {
+	content: "⚠️ CSS Error: ";
+	font-weight: bold;
+}

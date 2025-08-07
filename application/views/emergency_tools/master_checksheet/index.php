@@ -345,7 +345,7 @@
                                                             <?php if (!empty($type->icon)): ?>
                                                                 <img src="<?= base_url('assets/emergency_tools/img/equipment/' . $type->icon) ?>"
                                                                     alt="<?= htmlspecialchars($type->name) ?>" class="mb-2"
-                                                                    style="width: 50px; height: 50px; object-fit: cover;">
+                                                                    style="width: 50px; height: 50px; object-fit: contain;">
                                                             <?php else: ?>
                                                                 <i class="fas fa-tools fa-3x mb-2"></i>
                                                             <?php endif; ?>
@@ -512,8 +512,7 @@
                                             <?php if (!empty($equipment_types_dropdown)): ?>
                                                 <?php foreach ($equipment_types_dropdown as $type): ?>
                                                     <option value="<?= $type->id ?>">
-                                                        <?= htmlspecialchars($type->name) ?> -
-                                                        <?= htmlspecialchars($type->description) ?>
+                                                        <?= htmlspecialchars($type->name) ?>
                                                     </option>
                                                 <?php endforeach; ?>
                                             <?php endif; ?>
@@ -569,7 +568,7 @@
                                             <div class="d-flex align-items-center">
                                                 <div class="me-2">
                                                     <img id="picturePreviewImg" src="" alt="Preview"
-                                                        style="width: 60px; height: 60px; object-fit: cover; border: 1px solid #ddd; border-radius: 4px;">
+                                                        style="width: 60px; height: 60px; object-fit: contain; border: 1px solid #ddd; border-radius: 4px;">
                                                 </div>
                                                 <div>
                                                     <small class="text-muted">Preview gambar standar</small>
@@ -582,7 +581,7 @@
                                             <div class="d-flex align-items-center">
                                                 <div class="me-2">
                                                     <img id="current_picture_img" src="" alt="Current"
-                                                        style="width: 60px; height: 60px; object-fit: cover; border: 1px solid #ddd; border-radius: 4px;">
+                                                        style="width: 60px; height: 60px; object-fit: contain; border: 1px solid #ddd; border-radius: 4px;">
                                                 </div>
                                                 <div>
                                                     <small class="text-muted">Gambar saat ini</small>
@@ -870,7 +869,7 @@
                         <td>
                             ${template.standar_picture_url ?
                         `<img src="${baseUrl}assets/emergency_tools/img/standards/${template.standar_picture_url}"
-                                alt="Standard" class="img-thumbnail" style="width: 40px; height: 40px; object-fit: cover; cursor: pointer;"
+                                alt="Standard" class="img-thumbnail" style="width: 40px; height: 40px; object-fit: contain; cursor: pointer;"
                                 data-bs-toggle="modal" data-bs-target="#imageModal"
                                 data-image="${baseUrl}assets/emergency_tools/img/standards/${template.standar_picture_url}">` :
                         '<span class="text-muted">No image</span>'
@@ -1024,7 +1023,7 @@
                     <div class="col-md-2 text-center">
                         ${template.standar_picture_url ?
                     `<img src="${baseUrl}assets/emergency_tools/img/standards/${template.standar_picture_url}"
-                            alt="Standard" class="img-thumbnail" style="width: 40px; height: 40px; object-fit: cover;"
+                            alt="Standard" class="img-thumbnail" style="width: 40px; height: 40px; object-fit: contain;"
                             data-bs-toggle="modal" data-bs-target="#imageModal"
                             data-image="${baseUrl}assets/emergency_tools/img/standards/${template.standar_picture_url}">` :
                     '<span class="text-muted">No image</span>'

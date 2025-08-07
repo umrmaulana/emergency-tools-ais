@@ -101,4 +101,14 @@ class Location_model extends CI_Model
     {
         return $this->db->count_all('tm_locations');
     }
+
+    /**
+     * Get locations for dropdown
+     */
+    public function get_locations_for_dropdown()
+    {
+        $this->db->select('id, location_name as name');
+        $this->db->order_by('location_name', 'ASC');
+        return $this->db->get('tm_locations')->result();
+    }
 }

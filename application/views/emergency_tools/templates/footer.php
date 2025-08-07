@@ -11,61 +11,9 @@
 <script src="https://cdn.datatables.net/1.11.5/js/dataTables.bootstrap5.min.js"></script>
 
 <script>
-    let sidebarCollapsed = false;
-
     function toggleSidebar() {
         const sidebar = document.getElementById('sidebar');
-        const mainContent = document.getElementById('main-content');
-
-        if (window.innerWidth <= 768) {
-            // Mobile behavior - slide in/out
-            sidebar.classList.toggle('show');
-        } else {
-            // Desktop behavior - collapse/expand
-            sidebarCollapsed = !sidebarCollapsed;
-
-            if (sidebarCollapsed) {
-                sidebar.style.transform = 'translateX(-240px)';
-                sidebar.style.width = '20px';
-                mainContent.style.marginLeft = '20px';
-
-                // Hide text in sidebar, only show icons
-                const navLinks = sidebar.querySelectorAll('.nav-link, .dropdown-item');
-                navLinks.forEach(link => {
-                    const text = link.querySelector('span:last-child') || link.lastChild;
-                    if (text && text.nodeType === Node.TEXT_NODE) {
-                        text.style.display = 'none';
-                    }
-                });
-
-                // Hide dropdown arrows and text
-                const dropdownTexts = sidebar.querySelectorAll('.dropdown-toggle span, .dropdown-item');
-                dropdownTexts.forEach(text => {
-                    if (text.textContent.trim() && !text.querySelector('i')) {
-                        text.style.opacity = '0';
-                    }
-                });
-            } else {
-                sidebar.style.transform = 'translateX(0)';
-                sidebar.style.width = 'var(--sidebar-width)';
-                mainContent.style.marginLeft = 'var(--sidebar-width)';
-
-                // Show text in sidebar
-                const navLinks = sidebar.querySelectorAll('.nav-link, .dropdown-item');
-                navLinks.forEach(link => {
-                    const text = link.querySelector('span:last-child') || link.lastChild;
-                    if (text && text.nodeType === Node.TEXT_NODE) {
-                        text.style.display = 'inline';
-                    }
-                });
-
-                // Show dropdown text
-                const dropdownTexts = sidebar.querySelectorAll('.dropdown-toggle span, .dropdown-item');
-                dropdownTexts.forEach(text => {
-                    text.style.opacity = '1';
-                });
-            }
-        }
+        sidebar.classList.toggle('show');
     }
 
     // Close sidebar when clicking outside on mobile
@@ -77,47 +25,6 @@
             if (!sidebar.contains(event.target) && !toggleBtn.contains(event.target)) {
                 sidebar.classList.remove('show');
             }
-        }
-    });
-
-    // Handle window resize
-    window.addEventListener('resize', function () {
-        const sidebar = document.getElementById('sidebar');
-        const mainContent = document.getElementById('main-content');
-
-        if (window.innerWidth > 768) {
-            // Reset mobile classes
-            sidebar.classList.remove('show');
-
-            // Apply desktop state
-            if (sidebarCollapsed) {
-                sidebar.style.transform = 'translateX(-240px)';
-                sidebar.style.width = '20px';
-                mainContent.style.marginLeft = '20px';
-            } else {
-                sidebar.style.transform = 'translateX(0)';
-                sidebar.style.width = 'var(--sidebar-width)';
-                mainContent.style.marginLeft = 'var(--sidebar-width)';
-            }
-        } else {
-            // Reset desktop styles for mobile
-            sidebar.style.transform = '';
-            sidebar.style.width = '';
-            mainContent.style.marginLeft = '0';
-
-            // Reset text visibility
-            const navLinks = sidebar.querySelectorAll('.nav-link, .dropdown-item');
-            navLinks.forEach(link => {
-                const text = link.querySelector('span:last-child') || link.lastChild;
-                if (text && text.nodeType === Node.TEXT_NODE) {
-                    text.style.display = 'inline';
-                }
-            });
-
-            const dropdownTexts = sidebar.querySelectorAll('.dropdown-toggle span, .dropdown-item');
-            dropdownTexts.forEach(text => {
-                text.style.opacity = '1';
-            });
         }
     });
 

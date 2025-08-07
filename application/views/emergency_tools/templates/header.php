@@ -54,20 +54,11 @@
             transition: all 0.3s ease;
         }
 
-        .sidebar.collapsed {
-            width: 60px;
-        }
-
         .main-content {
             margin-left: var(--sidebar-width);
             margin-top: var(--header-height);
             padding: 30px;
             min-height: calc(100vh - var(--header-height));
-            transition: margin-left 0.3s ease;
-        }
-
-        .main-content.expanded {
-            margin-left: 60px;
         }
 
         .nav-link {
@@ -87,8 +78,6 @@
             border-radius: 8px;
             margin: 2px 10px;
             transition: all 0.3s ease;
-            white-space: nowrap;
-            overflow: hidden;
         }
 
         .sidebar .nav-link:hover {
@@ -99,11 +88,6 @@
         .sidebar .nav-link.active {
             background: linear-gradient(135deg, var(--primary-color) 0%, var(--secondary-color) 100%);
             color: white !important;
-        }
-
-        .sidebar .nav-link i {
-            min-width: 20px;
-            text-align: center;
         }
 
         .card {
@@ -150,18 +134,7 @@
         }
 
         .sidebar-toggle {
-            display: block;
-            background: transparent;
-            border: none;
-            color: white;
-            font-size: 1.1rem;
-            padding: 8px 12px;
-            border-radius: 6px;
-            transition: background-color 0.3s ease;
-        }
-
-        .sidebar-toggle:hover {
-            background-color: rgba(255, 255, 255, 0.1);
+            display: none;
         }
 
         .logo {
@@ -184,17 +157,12 @@
                 padding: 20px 15px;
             }
 
+            .sidebar-toggle {
+                display: block;
+            }
+
             .navbar-brand {
                 font-size: 1rem;
-            }
-
-            /* Reset desktop collapse styles on mobile */
-            .sidebar.collapsed {
-                width: 280px;
-            }
-
-            .main-content.expanded {
-                margin-left: 0;
             }
         }
 
@@ -216,8 +184,6 @@
             border-radius: 6px;
             margin: 2px 5px;
             transition: all 0.3s ease;
-            white-space: nowrap;
-            overflow: hidden;
         }
 
         .sidebar .dropdown-item:hover {
@@ -228,11 +194,6 @@
         .sidebar .dropdown-item.active {
             background: linear-gradient(135deg, var(--primary-color) 0%, var(--secondary-color) 100%);
             color: white !important;
-        }
-
-        .sidebar .dropdown-item i {
-            min-width: 20px;
-            text-align: center;
         }
 
         .sidebar .dropdown-toggle::after {
