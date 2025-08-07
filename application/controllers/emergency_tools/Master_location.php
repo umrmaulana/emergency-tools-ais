@@ -9,7 +9,7 @@ class Master_location extends CI_Controller
         parent::__construct();
         // Temporarily disable auth for testing
         // $this->_check_auth();
-        $this->load->model('Location_model');
+        $this->load->model('emergency_tools/Location_model');
     }
 
     /**
@@ -35,9 +35,12 @@ class Master_location extends CI_Controller
     public function create()
     {
         $data['title'] = 'Tambah Lokasi - Master Location';
-        // $data['user'] = $this->session->userdata(); // Commented for testing
+        $data['user'] = $this->session->userdata();
 
+        $this->load->view('emergency_tools/templates/header', $data);
+        $this->load->view('emergency_tools/templates/sidebar', $data);
         $this->load->view('emergency_tools/master_location/create', $data);
+        $this->load->view('emergency_tools/templates/footer', $data);
     }
 
     /**
@@ -59,9 +62,12 @@ class Master_location extends CI_Controller
 
         $data['title'] = 'Edit Lokasi - Master Location';
         $data['location'] = $location;
-        // $data['user'] = $this->session->userdata(); // Commented for testing
+        $data['user'] = $this->session->userdata();
 
+        $this->load->view('emergency_tools/templates/header', $data);
+        $this->load->view('emergency_tools/templates/sidebar', $data);
         $this->load->view('emergency_tools/master_location/edit', $data);
+        $this->load->view('emergency_tools/templates/footer', $data);
     }
 
     /**
@@ -82,10 +88,13 @@ class Master_location extends CI_Controller
         }
 
         $data['title'] = 'Edit Lokasi - Master Location';
-        // $data['user'] = $this->session->userdata(); // Commented for testing
+        $data['user'] = $this->session->userdata();
         $data['location'] = $location;
 
+        $this->load->view('emergency_tools/templates/header', $data);
+        $this->load->view('emergency_tools/templates/sidebar', $data);
         $this->load->view('emergency_tools/master_location/edit', $data);
+        $this->load->view('emergency_tools/templates/footer', $data);
     }
 
     /**

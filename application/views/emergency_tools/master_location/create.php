@@ -1,366 +1,412 @@
-<!DOCTYPE html>
-<html lang="id">
+<!-- Leaflet CSS -->
+<link rel="stylesheet" href="https://unpkg.com/leaflet@1.9.4/dist/leaflet.css" />
 
-<head>
-    <meta charset="UTF-8">
-    <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>Tambah Lokasi Baru - Emergency Tools</title>
+<style>
+    #leafletMap {
+        height: 500px;
+        width: 100%;
+        border-radius: 15px;
+        overflow: hidden;
+        /* Hide any overflow beyond card bounds */
+    }
 
-    <!-- Bootstrap 5 CSS -->
-    <link href="https://cdn.jsdelivr.net/npm/bootstrap@5.3.0/dist/css/bootstrap.min.css" rel="stylesheet">
-    <!-- FontAwesome -->
-    <link href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/css/all.min.css" rel="stylesheet">
-    <!-- SweetAlert2 -->
-    <link href="https://cdn.jsdelivr.net/npm/sweetalert2@11/dist/sweetalert2.min.css" rel="stylesheet">
+    .coordinate-info {
+        background: linear-gradient(135deg, #e3f2fd 0%, #f3e5f5 100%);
+        border-radius: 10px;
+        padding: 1rem;
+        margin-top: 1rem
+    }
 
-    <style>
-        body {
-            background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
-            min-height: 100vh;
-            font-family: 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif;
-        }
+    .btn-gradient {
+        background: linear-gradient(45deg, #007bff, #0056b3);
+        border: none;
+        color: white;
+    }
 
-        .main-container {
-            background: rgba(255, 255, 255, 0.95);
-            backdrop-filter: blur(10px);
-            border-radius: 20px;
-            box-shadow: 0 20px 40px rgba(0, 0, 0, 0.1);
-            margin: 20px auto;
-            overflow: hidden;
-        }
+    .btn-gradient:hover {
+        background: linear-gradient(45deg, #0056b3, #004085);
+        color: white;
+    }
+</style>
 
-        .page-header {
-            background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
-            color: white;
-            padding: 2rem;
-        }
+<!-- Page Header -->
+<div class="d-flex justify-content-between align-items-center mb-4">
+    <div>
+        <h2 class="mb-0">
+            <i class="fas fa-plus me-3"></i>Tambah Lokasi Baru
+        </h2>
+        <p class="text-muted mb-0">Pilih lokasi pada peta dan isi informasi lokasi</p>
+    </div>
+    <a href="<?= base_url('index.php/emergency_tools/master_location') ?>" class="btn btn-secondary">
+        <i class="fas fa-arrow-left me-2"></i>Kembali
+    </a>
+</div>
 
-        .location-marker {
-            position: absolute;
-            width: 14px;
-            height: 14px;
-            background: linear-gradient(135deg, #ff6b6b, #ee5a52);
-            border: 3px solid white;
-            border-radius: 50%;
-            transform: translate(-50%, -50%);
-            z-index: 10;
-            cursor: pointer;
-            transition: all 0.3s ease;
-            box-shadow: 0 4px 12px rgba(0, 0, 0, 0.2);
-        }
-
-        .location-marker.selected {
-            background: linear-gradient(135deg, #4facfe, #00f2fe);
-            width: 18px;
-            height: 18px;
-        }
-
-        .map-container {
-            position: relative;
-            overflow: hidden;
-            border-radius: 15px;
-            background: #f8f9fa;
-            cursor: crosshair;
-            box-shadow: inset 0 2px 10px rgba(0, 0, 0, 0.1);
-        }
-
-        .map-image {
-            width: 100%;
-            height: auto;
-            display: block;
-        }
-    </style>
-</head>
-
-<body>
-    <div class="container-fluid p-4">
-        <div class="main-container">
-            <!-- Page Header -->
-            <div class="page-header">
-                <div class="d-flex justify-content-between align-items-center">
-                    <div>
-                        <h1><i class="fas fa-map-marker-alt me-3"></i>Tambah Lokasi Baru</h1>
-                        <p class="mb-0">Pilih posisi pada peta dan lengkapi informasi lokasi</p>
-                    </div>
-                    <a href="<?= base_url('index.php/emergency_tools/master_location') ?>" class="btn btn-light btn-lg">
-                        <i class="fas fa-arrow-left me-2"></i>Kembali
-                    </a>
+<!-- Content Area -->
+<form id="locationForm" method="POST">
+    <div class="row">
+        <!-- Map Section -->
+        <div class="col-lg-8 mb-4">
+            <div class="card">
+                <div class="card-header">
+                    <h5 class="mb-0">
+                        <i class="fas fa-map me-2"></i>Pilih Lokasi pada Peta
+                    </h5>
+                    <small class="text-muted">Klik pada peta untuk menentukan posisi lokasi</small>
+                </div>
+                <div class="card-body p-0">
+                    <div id="leafletMap"></div>
                 </div>
             </div>
 
-            <!-- Content Area -->
-            <div class="p-4">
-                <form id="locationForm" action="<?= base_url('index.php/emergency_tools/master_location/api/create') ?>"
-                    method="POST">
-                    <div class="row g-4">
-                        <!-- Map Area -->
-                        <div class="col-lg-8">
-                            <div class="card h-100">
-                                <div class="card-header">
-                                    <h5 class="card-title mb-0">
-                                        <i class="fas fa-map me-2"></i>
-                                        Pilih Posisi Lokasi
-                                    </h5>
-                                </div>
-                                <div class="card-body p-0">
-                                    <div id="mapContainer" class="map-container" style="min-height: 500px;">
-                                        <!-- Area Mapping Grid -->
-                                        <img id="areaMapping"
-                                            src="<?php echo base_url('assets/img/area_mapping_8x4.png'); ?>"
-                                            class="map-image" style="width: 800px; height: 400px; object-fit: contain;"
-                                            onclick="selectPoint(event)" alt="Area Mapping">
+            <!-- Coordinate Info -->
+            <div id="coordinateInfo" class="coordinate-info" style="display: none;">
+                <h6 class="text-primary mb-2">
+                    <i class="fas fa-crosshairs me-2"></i>Koordinat Terpilih
+                </h6>
+                <div id="coordinateDisplay" class="text-muted">
+                    <!-- Coordinate info will be displayed here -->
+                </div>
+            </div>
+        </div>
 
-                                        <!-- Selected Point Marker -->
-                                        <div id="selectedMarker" class="location-marker selected"
-                                            style="display: none;"></div>
-                                    </div>
-                                </div>
-                                <div class="card-footer bg-light">
-                                    <div id="positionInfo" class="alert alert-secondary mb-0">
-                                        <i class="fas fa-crosshairs me-2"></i>
-                                        Belum ada posisi yang dipilih
-                                    </div>
-                                </div>
+        <!-- Form Section -->
+        <div class="col-lg-4">
+            <div class="card">
+                <div class="card-header">
+                    <h5 class="mb-0">
+                        <i class="fas fa-info-circle me-2"></i>Informasi Lokasi
+                    </h5>
+                </div>
+                <div class="card-body">
+                    <div class="mb-3">
+                        <label for="location_code" class="form-label">
+                            <i class="fas fa-code me-1"></i>Kode Lokasi <span class="text-danger">*</span>
+                        </label>
+                        <input type="text" class="form-control" id="location_code" name="location_code" required
+                            placeholder="Contoh: LOC-001">
+                    </div>
+
+                    <div class="mb-3">
+                        <label for="location_name" class="form-label">
+                            <i class="fas fa-tag me-1"></i>Nama Lokasi <span class="text-danger">*</span>
+                        </label>
+                        <input type="text" class="form-control" id="location_name" name="location_name" required
+                            placeholder="Contoh: Fire Extinguisher Area A">
+                    </div>
+
+                    <div class="mb-3">
+                        <label for="area_code" class="form-label">
+                            <i class="fas fa-map-pin me-1"></i>Kode Area
+                        </label>
+                        <input type="text" class="form-control" id="area_code" name="area_code" readonly
+                            placeholder="Akan terisi otomatis">
+                    </div>
+
+                    <div class="row">
+                        <div class="col-6">
+                            <div class="mb-3">
+                                <label for="area_x" class="form-label">Koordinat X</label>
+                                <input type="number" step="0.01" class="form-control" id="area_x" name="area_x"
+                                    readonly>
                             </div>
                         </div>
-
-                        <!-- Form Area -->
-                        <div class="col-lg-4">
-                            <div class="card h-100">
-                                <div class="card-header">
-                                    <h5 class="card-title mb-0">
-                                        <i class="fas fa-edit me-2"></i>Informasi Lokasi
-                                    </h5>
-                                </div>
-                                <div class="card-body">
-                                    <div class="mb-3">
-                                        <label class="form-label fw-bold">
-                                            Kode Lokasi <span class="text-danger">*</span>
-                                        </label>
-                                        <input type="text" class="form-control" id="location_code" name="location_code"
-                                            placeholder="Contoh: LOC001" required>
-                                    </div>
-
-                                    <div class="mb-3">
-                                        <label class="form-label fw-bold">
-                                            Nama Lokasi <span class="text-danger">*</span>
-                                        </label>
-                                        <input type="text" class="form-control" id="location_name" name="location_name"
-                                            placeholder="Contoh: Area Produksi A" required>
-                                    </div>
-
-                                    <div class="row">
-                                        <div class="col-md-6">
-                                            <div class="mb-3">
-                                                <label class="form-label fw-bold">Area X</label>
-                                                <input type="number" class="form-control" id="area_x" name="area_x"
-                                                    readonly>
-                                            </div>
-                                        </div>
-                                        <div class="col-md-6">
-                                            <div class="mb-3">
-                                                <label class="form-label fw-bold">Area Y</label>
-                                                <input type="number" class="form-control" id="area_y" name="area_y"
-                                                    readonly>
-                                            </div>
-                                        </div>
-                                    </div>
-
-                                    <div class="mb-3">
-                                        <label class="form-label fw-bold">Kode Area</label>
-                                        <input type="text" class="form-control" id="area_code" name="area_code"
-                                            readonly>
-                                    </div>
-
-                                    <div class="mb-4">
-                                        <label class="form-label fw-bold">Deskripsi</label>
-                                        <textarea class="form-control" id="description" name="description" rows="4"
-                                            placeholder="Tambahkan deskripsi atau catatan lokasi..."></textarea>
-                                    </div>
-                                </div>
-                                <div class="card-footer bg-light text-center">
-                                    <button type="submit" class="btn btn-primary btn-lg w-100" id="submitBtn">
-                                        <i class="fas fa-save me-2"></i>Simpan Lokasi
-                                    </button>
-                                </div>
+                        <div class="col-6">
+                            <div class="mb-3">
+                                <label for="area_y" class="form-label">Koordinat Y</label>
+                                <input type="number" step="0.01" class="form-control" id="area_y" name="area_y"
+                                    readonly>
                             </div>
                         </div>
                     </div>
-                </form>
+
+                    <div class="mb-3">
+                        <label for="description" class="form-label">
+                            <i class="fas fa-align-left me-1"></i>Deskripsi
+                        </label>
+                        <textarea class="form-control" id="description" name="description" rows="3"
+                            placeholder="Deskripsi tambahan lokasi (opsional)"></textarea>
+                    </div>
+
+                    <button type="submit" class="btn btn-primary w-100" id="submitBtn">
+                        <i class="fas fa-save me-2"></i>Simpan Lokasi
+                    </button>
+
+                    <div class="mt-3">
+                        <small class="text-muted">
+                            <i class="fas fa-info-circle me-1"></i>
+                            (*) Field yang wajib diisi<br>
+                            Pastikan telah memilih lokasi pada peta
+                        </small>
+                    </div>
+                </div>
             </div>
         </div>
     </div>
+</form>
 
-    <!-- Bootstrap 5 JS -->
-    <script src="https://cdn.jsdelivr.net/npm/bootstrap@5.3.0/dist/js/bootstrap.bundle.min.js"></script>
-    <!-- SweetAlert2 -->
-    <script src="https://cdn.jsdelivr.net/npm/sweetalert2@11/dist/sweetalert2.all.min.js"></script>
+<!-- Leaflet JS -->
+<script src="https://unpkg.com/leaflet@1.9.4/dist/leaflet.js"></script>
 
-    <script>
-        // Global variables
-        let selectedX = null;
-        let selectedY = null;
-        let selectedArea = null;
+<script>
+    // Global variables
+    let leafletMap;
+    let selectedMarker = null;
+    let selectedCoordinates = null;
 
-        // Initialize when document is ready
-        document.addEventListener('DOMContentLoaded', function () {
-            console.log('Create form loaded');
+    // Initialize when document is ready
+    document.addEventListener('DOMContentLoaded', function () {
+        console.log('Create form loaded');
 
-            // Initialize form submission
-            const form = document.getElementById('locationForm');
-            if (form) {
-                form.addEventListener('submit', handleFormSubmit);
+        // Initialize Leaflet map
+        initializeMap();
+
+        // Initialize form submission
+        const form = document.getElementById('locationForm');
+        if (form) {
+            form.addEventListener('submit', handleFormSubmit);
+        }
+    });
+
+    // Initialize Leaflet map with only Mapping-area.png image
+    function initializeMap() {
+        // Calculate image dimensions for proper display
+        var imageWidth = 1000;  // Adjust based on your image width
+        var imageHeight = 800;  // Adjust based on your image height
+        var bounds = [[0, 0], [imageHeight, imageWidth]];
+
+        // Initialize map without any base layer
+        leafletMap = L.map('leafletMap', {
+            crs: L.CRS.Simple,
+            minZoom: -2,
+            maxZoom: 3,
+            zoomControl: true,
+            attributionControl: false,
+            maxBoundsViscosity: 1.0 // Prevent dragging outside bounds
+        });
+
+        // Add the Mapping-area.png as the main layer
+        L.imageOverlay('<?= base_url("assets/emergency_tools/img/Mapping-area.png") ?>', bounds, {
+            opacity: 1.0
+        }).addTo(leafletMap);
+
+        // Fit map to show the full image and restrict bounds to image only
+        leafletMap.fitBounds(bounds);
+        leafletMap.setMaxBounds(bounds);
+
+        // Set the initial view to show the entire image at maximum zoom out
+        leafletMap.setView([imageHeight / 2, imageWidth / 2], leafletMap.getBoundsZoom(bounds));
+
+        // Add click handler for selecting location - only within image bounds
+        leafletMap.on('click', function (e) {
+            // Check if click is within image bounds
+            if (e.latlng.lat >= 0 && e.latlng.lat <= imageHeight &&
+                e.latlng.lng >= 0 && e.latlng.lng <= imageWidth) {
+                selectLocation(e.latlng);
+            } else {
+                console.log('Click outside image bounds, ignoring');
             }
         });
 
-        // Function to select point on map
-        function selectPoint(event) {
-            event.preventDefault();
-            event.stopPropagation();
+        console.log('Leaflet map initialized with image bounds only');
+    }
 
-            const img = event.target;
-            const rect = img.getBoundingClientRect();
+    // Function to select location on map
+    function selectLocation(latlng) {
+        console.log('selectLocation called with:', latlng);
 
-            // Get click coordinates relative to image
-            const x = event.clientX - rect.left;
-            const y = event.clientY - rect.top;
-
-            // Store coordinates (convert to actual pixel coordinates)
-            selectedX = Math.round((x / rect.width) * 800); // 800 is original map width
-            selectedY = Math.round((y / rect.height) * 400); // 400 is original map height
-
-            // Calculate area code based on grid (8x4)
-            const gridX = Math.floor((x / rect.width) * 8);
-            const gridY = Math.floor((y / rect.height) * 4);
-            selectedArea = String.fromCharCode(65 + gridY) + (gridX + 1);
-
-            // Update form fields
-            document.getElementById('area_x').value = selectedX;
-            document.getElementById('area_y').value = selectedY;
-            document.getElementById('area_code').value = selectedArea;
-
-            // Show marker at clicked position
-            const marker = document.getElementById('selectedMarker');
-            marker.style.left = x + 'px';
-            marker.style.top = y + 'px';
-            marker.style.display = 'block';
-
-            // Update position info
-            const positionInfo = document.getElementById('positionInfo');
-            positionInfo.innerHTML = `
-                <i class="fas fa-check-circle me-2"></i>
-                <strong>Posisi:</strong> (${selectedX}, ${selectedY}) - <strong>Area:</strong> ${selectedArea}
-            `;
-            positionInfo.className = 'alert alert-success mb-0';
-
-            console.log('Selected position:', selectedX, selectedY, 'Area:', selectedArea);
+        // Remove existing marker if any
+        if (selectedMarker) {
+            leafletMap.removeLayer(selectedMarker);
         }
 
-        // Handle form submission
-        function handleFormSubmit(e) {
-            e.preventDefault();
+        // Create new marker
+        const markerIcon = L.divIcon({
+            className: 'custom-div-icon',
+            html: '<div style="width: 20px; height: 20px; background: linear-gradient(135deg, #4facfe, #00f2fe); border: 3px solid white; border-radius: 50%; box-shadow: 0 4px 8px rgba(0,0,0,0.3);"></div>',
+            iconSize: [26, 26],
+            iconAnchor: [13, 13]
+        });
 
-            // Validate required fields
-            const locationCode = document.getElementById('location_code').value.trim();
-            const locationName = document.getElementById('location_name').value.trim();
+        selectedMarker = L.marker([latlng.lat, latlng.lng], {
+            icon: markerIcon
+        }).addTo(leafletMap);
 
-            if (!locationCode) {
+        // Store selected coordinates
+        selectedCoordinates = {
+            lat: latlng.lat,
+            lng: latlng.lng
+        };
+
+        console.log('Setting form fields:', latlng.lat.toFixed(2), latlng.lng.toFixed(2));
+
+        // Update form fields with pixel coordinates
+        document.getElementById('area_x').value = latlng.lat.toFixed(2);
+        document.getElementById('area_y').value = latlng.lng.toFixed(2);
+
+        // Generate area code based on coordinates
+        const areaCode = generateAreaCode(latlng.lat, latlng.lng);
+        document.getElementById('area_code').value = areaCode;
+
+        // Update coordinate display
+        updateCoordinateDisplay(latlng.lat, latlng.lng, areaCode);
+
+        console.log('Selected location:', latlng.lat, latlng.lng, 'Area:', areaCode);
+    }
+
+    // Function to generate area code based on coordinates
+    function generateAreaCode(lat, lng) {
+        // Generate area code based on image pixel coordinates
+        const normalizedX = Math.abs(lat);
+        const normalizedY = Math.abs(lng);
+
+        const gridX = Math.floor(normalizedX / 100) % 8; // 0-7
+        const gridY = Math.floor(normalizedY / 125) % 4; // 0-3
+
+        const areaLetter = String.fromCharCode(65 + gridY); // A-D
+        const areaNumber = gridX + 1; // 1-8
+
+        return areaLetter + areaNumber;
+    }
+
+    // Function to update coordinate display
+    function updateCoordinateDisplay(lat, lng, areaCode) {
+        const coordinateInfo = document.getElementById('coordinateInfo');
+        const coordinateDisplay = document.getElementById('coordinateDisplay');
+
+        coordinateDisplay.innerHTML = `
+            <div class="row">
+                <div class="col-6">
+                    <strong>X Position:</strong><br>
+                    <code>${lat.toFixed(2)}</code>
+                </div>
+                <div class="col-6">
+                    <strong>Y Position:</strong><br>
+                    <code>${lng.toFixed(2)}</code>
+                </div>
+            </div>
+            <div class="mt-2">
+                <strong>Area Code:</strong> 
+                <span class="badge bg-primary">${areaCode}</span>
+            </div>
+        `;
+
+        coordinateInfo.style.display = 'block';
+    }
+
+    // Handle form submission
+    function handleFormSubmit(e) {
+        e.preventDefault();
+
+        // Validate required fields
+        const locationCode = document.getElementById('location_code').value.trim();
+        const locationName = document.getElementById('location_name').value.trim();
+
+        if (!locationCode) {
+            if (typeof Swal !== 'undefined') {
                 Swal.fire({
                     icon: 'warning',
-                    title: 'Kode Lokasi Diperlukan!',
-                    text: 'Silakan isi kode lokasi.',
+                    title: 'Kode Lokasi Diperlukan',
+                    text: 'Silakan isi kode lokasi terlebih dahulu.',
                     confirmButtonColor: '#f39c12'
                 }).then(() => {
                     document.getElementById('location_code').focus();
                 });
-                return;
+            } else {
+                alert('Silakan isi kode lokasi terlebih dahulu.');
+                document.getElementById('location_code').focus();
             }
+            return;
+        }
 
-            if (!locationName) {
+        if (!locationName) {
+            if (typeof Swal !== 'undefined') {
                 Swal.fire({
                     icon: 'warning',
-                    title: 'Nama Lokasi Diperlukan!',
-                    text: 'Silakan isi nama lokasi.',
+                    title: 'Nama Lokasi Diperlukan',
+                    text: 'Silakan isi nama lokasi terlebih dahulu.',
                     confirmButtonColor: '#f39c12'
                 }).then(() => {
                     document.getElementById('location_name').focus();
                 });
-                return;
+            } else {
+                alert('Silakan isi nama lokasi terlebih dahulu.');
+                document.getElementById('location_name').focus();
             }
+            return;
+        }
 
-            if (selectedX === null || selectedY === null) {
+        if (!selectedCoordinates) {
+            if (typeof Swal !== 'undefined') {
                 Swal.fire({
-                    icon: 'info',
-                    title: 'Pilih Posisi Lokasi!',
-                    text: 'Silakan pilih posisi pada peta terlebih dahulu.',
+                    icon: 'warning',
+                    title: 'Lokasi Belum Dipilih',
+                    text: 'Silakan pilih lokasi pada peta terlebih dahulu.',
                     confirmButtonColor: '#3085d6'
                 });
-                return;
+            } else {
+                alert('Silakan pilih lokasi pada peta terlebih dahulu.');
             }
+            return;
+        }
 
-            // Show loading state
-            const submitBtn = document.getElementById('submitBtn');
-            const originalText = submitBtn.innerHTML;
-            submitBtn.innerHTML = '<i class="fas fa-spinner fa-spin me-2"></i>Menyimpan Data...';
-            submitBtn.disabled = true;
+        // Show loading state
+        const submitBtn = document.getElementById('submitBtn');
+        const originalText = submitBtn.innerHTML;
+        submitBtn.innerHTML = '<i class="fas fa-spinner fa-spin me-2"></i>Menyimpan Data...';
+        submitBtn.disabled = true;
 
-            // Prepare form data as URL encoded string  
-            const formParams = new URLSearchParams();
-            formParams.append('location_code', locationCode);
-            formParams.append('location_name', locationName);
-            formParams.append('area_x', selectedX);
-            formParams.append('area_y', selectedY);
-            formParams.append('area_code', selectedArea);
-            formParams.append('description', document.getElementById('description').value);
+        // Prepare form data
+        const formParams = new URLSearchParams();
+        formParams.append('location_code', locationCode);
+        formParams.append('location_name', locationName);
+        formParams.append('area_x', selectedCoordinates.lat.toFixed(2));
+        formParams.append('area_y', selectedCoordinates.lng.toFixed(2));
+        formParams.append('area_code', document.getElementById('area_code').value);
+        formParams.append('description', document.getElementById('description').value);
 
-            // Submit via AJAX
-            fetch('<?= base_url("index.php/emergency_tools/master_location/api/create") ?>', {
-                method: 'POST',
-                headers: {
-                    'Content-Type': 'application/x-www-form-urlencoded',
-                },
-                body: formParams.toString()
-            })
-                .then(response => response.json())
-                .then(data => {
-                    if (data.success) {
-                        Swal.fire({
-                            icon: 'success',
-                            title: 'Berhasil!',
-                            text: data.message || 'Lokasi berhasil ditambahkan!',
-                            confirmButtonColor: '#28a745',
-                            timer: 2000,
-                            timerProgressBar: true
-                        }).then(() => {
-                            // Redirect after success
-                            window.location.href = '<?= base_url("index.php/emergency_tools/master_location") ?>';
-                        });
-                    } else {
-                        Swal.fire({
-                            icon: 'error',
-                            title: 'Gagal Menyimpan!',
-                            text: data.message || 'Gagal menambahkan lokasi!',
-                            confirmButtonColor: '#dc3545'
-                        });
-                        // Reset button
-                        submitBtn.innerHTML = originalText;
-                        submitBtn.disabled = false;
-                    }
-                })
-                .catch(error => {
-                    console.error('Error:', error);
+        // Submit via AJAX
+        fetch('<?= base_url("index.php/emergency_tools/master_location/api/create") ?>', {
+            method: 'POST',
+            headers: {
+                'Content-Type': 'application/x-www-form-urlencoded',
+            },
+            body: formParams.toString()
+        })
+            .then(response => response.json())
+            .then(data => {
+                submitBtn.innerHTML = originalText;
+                submitBtn.disabled = false;
+
+                if (data.success) {
+                    Swal.fire({
+                        icon: 'success',
+                        title: 'Berhasil!',
+                        text: data.message,
+                        confirmButtonColor: '#28a745'
+                    }).then(() => {
+                        window.location.href = '<?= base_url("index.php/emergency_tools/master_location") ?>';
+                    });
+                } else {
                     Swal.fire({
                         icon: 'error',
-                        title: 'Terjadi Error!',
-                        text: 'Error: ' + error.message,
+                        title: 'Gagal!',
+                        text: data.message,
                         confirmButtonColor: '#dc3545'
                     });
-                    // Reset button
-                    submitBtn.innerHTML = originalText;
-                    submitBtn.disabled = false;
-                });
-        }
-    </script>
-</body>
+                }
+            })
+            .catch(error => {
+                console.error('Error:', error);
+                submitBtn.innerHTML = originalText;
+                submitBtn.disabled = false;
 
-</html>
+                Swal.fire({
+                    icon: 'error',
+                    title: 'Terjadi Kesalahan!',
+                    text: 'Gagal menyimpan data lokasi. Silakan coba lagi.',
+                    confirmButtonColor: '#dc3545'
+                });
+            });
+    }
+</script>

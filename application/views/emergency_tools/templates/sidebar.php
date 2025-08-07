@@ -11,7 +11,6 @@
                         <i class="fas fa-tools me-2"></i>
                         Emergency Tools
                     </span>
-                    <i class="fas fa-chevron-down"></i>
                 </a>
                 <ul class="dropdown-menu w-100 border-0 shadow-sm" aria-labelledby="emergencyToolsDropdown"
                     style="position: relative; transform: none !important; margin: 0;">

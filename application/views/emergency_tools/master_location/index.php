@@ -1,87 +1,85 @@
+<!-- Leaflet CSS -->
+<link rel="stylesheet" href="https://unpkg.com/leaflet@1.9.4/dist/leaflet.css" />
+
 <style>
-    /* Location marker styles - titik kecil yang akurat */
-    .location-marker {
-        position: absolute;
-        width: 12px;
-        height: 12px;
-        background: #dc3545;
-        border: 2px solid white;
-        border-radius: 50%;
-        transform: translate(-50%, -50%);
-        z-index: 10;
+    /* Animation and transition styles for consistency */
+    .fade-in {
+        animation: fadeIn 0.5s ease-in-out;
+    }
+
+    @keyframes fadeIn {
+        from {
+            opacity: 0;
+            transform: translateY(10px);
+        }
+
+        to {
+            opacity: 1;
+            transform: translateY(0);
+        }
+    }
+
+    .table tbody tr {
+        transition: all 0.3s ease;
+    }
+
+    .table tbody tr:hover {
+        background-color: rgba(0, 123, 255, 0.05);
+        transform: translateX(2px);
+    }
+
+    .btn {
+        transition: all 0.3s ease;
+    }
+
+    .sortable {
         cursor: pointer;
-        transition: all 0.2s ease;
-        box-shadow: 0 2px 4px rgba(0, 0, 0, 0.3);
+        transition: color 0.2s ease;
     }
 
-    .location-marker:hover {
-        width: 16px;
-        height: 16px;
-        box-shadow: 0 4px 8px rgba(0, 0, 0, 0.4);
+    .sortable:hover {
+        color: #0d6efd;
     }
 
-    .location-marker.selected {
-        background: #007bff;
-        width: 16px;
-        height: 16px;
-    }
-
-    /* Map container dengan zoom capability */
-    .map-container {
-        position: relative;
-        overflow: hidden;
-        border: 2px solid #ddd;
-        border-radius: 8px;
-        background: #f8f9fa;
-        cursor: crosshair;
-    }
-
-    .map-image {
+    /* Leaflet Map Styles */
+    #leafletMap {
+        height: 600px;
         width: 100%;
-        height: auto;
-        display: block;
-        transition: transform 0.3s ease;
+        border-radius: 15px;
+        box-shadow: 0 10px 25px rgba(0, 0, 0, 0.1);
     }
 
-    .zoom-controls {
-        position: absolute;
-        top: 10px;
-        right: 10px;
-        z-index: 20;
-        display: flex;
-        flex-direction: column;
-        gap: 5px;
+    /* Custom marker popup styles */
+    .custom-popup {
+        font-family: 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif;
     }
 
-    .zoom-btn {
-        width: 35px;
-        height: 35px;
-        background: white;
-        border: 1px solid #ddd;
-        border-radius: 4px;
-        display: flex;
-        align-items: center;
-        justify-content: center;
-        cursor: pointer;
-        font-weight: bold;
-        box-shadow: 0 2px 4px rgba(0, 0, 0, 0.1);
+    .custom-popup .popup-title {
+        font-weight: 600;
+        color: #2c3e50;
+        margin-bottom: 5px;
     }
 
-    .zoom-btn:hover {
-        background: #f8f9fa;
-        box-shadow: 0 4px 8px rgba(0, 0, 0, 0.2);
+    .custom-popup .popup-content {
+        font-size: 13px;
+        color: #7f8c8d;
     }
 </style>
 
+<!-- Page Header -->
 <div class="container-fluid">
     <div class="row">
         <div class="col-12">
             <div class="d-flex justify-content-between align-items-center mb-4">
                 <div>
                     <h2 class="mb-0">Master Location</h2>
-                    <p class="text-muted mb-0">Kelola data lokasi area dengan posisi pada peta</p>
+                    <p class="text-muted mb-0">Kelola data lokasi emergency tools</p>
                 </div>
-                <div>
+                <div class="d-flex gap-2">
+                    <button class="btn btn-outline-secondary" onclick="refreshData()" title="Refresh Data"
+                        data-bs-toggle="tooltip">
+                        <i class="fas fa-sync-alt"></i>
+                    </button>
                     <a href="<?= base_url('emergency_tools/master_location/create') ?>" class="btn btn-primary">
                         <i class="fas fa-plus me-2"></i>Tambah Lokasi
                     </a>
@@ -89,182 +87,142 @@
             </div>
         </div>
     </div>
+</div>
 
-    <div class="row">
-        <!-- Map Area - Full Width -->
-        <div class="col-12 mb-4">
-            <div class="card">
-                <div class="card-header bg-white">
-                    <h5 class="card-title mb-0">
-                        <i class="fas fa-map me-2 text-primary"></i>
-                        Peta Area & Posisi Lokasi
-                    </h5>
-                </div>
-                <div class="card-body p-0">
-                    <div id="mapContainer" class="map-container" style="min-height: 500px;">
-                        <!-- Zoom Controls -->
-                        <div class="zoom-controls">
-                            <button class="zoom-btn" onclick="zoomIn()">+</button>
-                            <button class="zoom-btn" onclick="zoomOut()">-</button>
-                            <button class="zoom-btn" onclick="resetZoom()" title="Reset Zoom">⌂</button>
-                        </div>
-
-                        <!-- Area Mapping Grid 8x4 with zoom capability -->
-                        <img id="areaMapping" src="<?php echo base_url('assets/img/area_mapping_8x4.png'); ?>"
-                            class="map-image" style="width: 800px; height: 400px; object-fit: contain;">
-
-                        <!-- Location Markers Container -->
-                        <div id="locationMarkers"
-                            style="position: absolute; top: 0; left: 0; width: 100%; height: 100%; pointer-events: none;">
-                        </div>
+<!-- Map Section -->
+<div class="row mb-4">
+    <div class="col-12">
+        <div class="card">
+            <div class="card-header bg-white">
+                <div class="d-flex justify-content-between align-items-center">
+                    <div>
+                        <h5 class="card-title mb-0">
+                            <i class="fas fa-map me-2 text-primary"></i>
+                            Peta Lokasi Area Pabrik
+                        </h5>
+                    </div>
+                    <div>
+                        <button class="btn btn-sm btn-outline-primary" onclick="fitMapToMarkers()">
+                            <i class="fas fa-expand me-1"></i>Fit All Markers
+                        </button>
                     </div>
                 </div>
             </div>
-
-            <div class="row mt-3">
-                <div class="col-md-6">
-                    <small class="text-muted">
-                        <i class="fas fa-info-circle me-1"></i>
-                        Klik pada area untuk melihat informasi lokasi.
-                    </small>
-                </div>
-                <div class="col-md-6 text-end">
-                    <small class="text-muted">
-                        Area: 8 kolom × 4 baris = 32 zona lokasi
-                    </small>
-                </div>
+            <div class="card-body p-0">
+                <div id="leafletMap"></div>
             </div>
         </div>
     </div>
+</div>
 
-    <!-- Location List with Search - Full Width -->
-    <div class="row">
-        <div class="col-12">
-            <div class="card">
-                <div class="card-header bg-white d-flex justify-content-between align-items-center">
+<!-- Search and Filter Section -->
+<div class="container-fluid">
+    <div class="row mb-4">
+        <div class="col-md-6">
+            <div class="input-group">
+                <span class="input-group-text">
+                    <i class="fas fa-search"></i>
+                </span>
+                <input type="text" class="form-control" id="locationSearch"
+                    placeholder="Cari berdasarkan kode atau nama lokasi...">
+            </div>
+        </div>
+        <div class="col-md-3">
+            <select class="form-select" id="entriesPerPage">
+                <option value="10">10 entries</option>
+                <option value="25">25 entries</option>
+                <option value="50">50 entries</option>
+                <option value="100">100 entries</option>
+            </select>
+        </div>
+        <div class="col-md-3 text-end">
+            <button type="button" class="btn btn-outline-secondary" onclick="refreshData()">
+                <i class="fas fa-sync-alt me-2"></i>Refresh
+            </button>
+        </div>
+    </div>
+</div>
+
+<!-- Location List Table -->
+<div class="row">
+    <div class="col-12">
+        <div class="card">
+            <div class="card-header bg-white d-flex justify-content-between align-items-center">
+                <div>
                     <h5 class="card-title mb-0">
-                        <i class="fas fa-list me-2 text-primary"></i>
+                        <i class="fas fa-map-marker-alt me-2 text-primary"></i>
                         Daftar Lokasi
+                        <small class="text-muted" id="locationCount">(0 items)</small>
                     </h5>
-                    <div class="d-flex align-items-center gap-3">
-                        <!-- Search Box -->
-                        <div class="input-group" style="width: 300px;">
-                            <span class="input-group-text"><i class="fas fa-search"></i></span>
-                            <input type="text" class="form-control" id="locationSearch" placeholder="Cari lokasi...">
-                        </div>
-                        <!-- Show entries -->
-                        <div class="d-flex align-items-center">
-                            <label class="me-2 text-nowrap">Tampilkan:</label>
-                            <select class="form-select form-select-sm" id="entriesPerPage" style="width: 80px;">
-                                <option value="5">5</option>
-                                <option value="10" selected>10</option>
-                                <option value="25">25</option>
-                                <option value="50">50</option>
-                                <option value="100">100</option>
-                            </select>
-                        </div>
-                    </div>
                 </div>
-                <div class="card-body p-0">
-                    <div class="table-responsive">
-                        <table class="table table-hover mb-0">
-                            <thead class="table-light">
-                                <tr>
-                                    <th width="50px">No</th>
-                                    <th>Kode Lokasi</th>
-                                    <th>Nama Lokasi</th>
-                                    <th>Deskripsi</th>
-                                    <th width="100px">Area</th>
-                                    <th width="120px">Koordinat</th>
-                                    <th width="120px">Aksi</th>
-                                </tr>
-                            </thead>
-                            <tbody id="locationTableBody">
-                                <?php if (isset($locations) && !empty($locations)): ?>
-                                    <?php foreach ($locations as $index => $location): ?>
-                                        <tr>
-                                            <td><?php echo $index + 1; ?></td>
-                                            <td>
-                                                <span
-                                                    class="fw-bold text-primary"><?php echo htmlspecialchars($location->location_code); ?></span>
-                                            </td>
-                                            <td>
-                                                <div class="fw-bold"><?php echo htmlspecialchars($location->location_name); ?>
-                                                </div>
-                                            </td>
-                                            <td>
-                                                <small
-                                                    class="text-muted"><?php echo htmlspecialchars($location->desc ?: '-'); ?></small>
-                                            </td>
-                                            <td>
-                                                <span
-                                                    class="badge bg-info"><?php echo htmlspecialchars($location->area_code); ?></span>
-                                            </td>
-                                            <td>
-                                                <small class="text-muted">(<?php echo $location->area_x; ?>,
-                                                    <?php echo $location->area_y; ?>)</small>
-                                            </td>
-                                            <td>
-                                                <div class="btn-group btn-group-sm">
-                                                    <a href="<?= base_url('emergency_tools/master_location/edit/' . $location->id) ?>"
-                                                        class="btn btn-warning" title="Edit">
-                                                        <i class="fas fa-edit"></i>
-                                                    </a>
-                                                    <button class="btn btn-danger"
-                                                        onclick="deleteLocation(<?php echo $location->id; ?>)" title="Delete">
-                                                        <i class="fas fa-trash"></i>
-                                                    </button>
-                                                </div>
-                                            </td>
-                                        </tr>
-                                    <?php endforeach; ?>
-                                <?php else: ?>
-                                    <tr>
-                                        <td colspan="7" class="text-center text-muted py-4">
-                                            <i class="fas fa-inbox fa-3x mb-3 d-block"></i>
-                                            Belum ada data lokasi
-                                        </td>
-                                    </tr>
-                                <?php endif; ?>
-                            </tbody>
-                        </table>
-                    </div>
-                    <!-- Pagination and Info -->
-                    <div class="card-footer bg-white d-flex justify-content-between align-items-center">
-                        <div class="text-muted" id="tableInfo">
-                            Menampilkan 1 sampai <?php echo isset($locations) ? count($locations) : 0; ?> dari
-                            <?php echo isset($locations) ? count($locations) : 0; ?> data
-                        </div>
-                        <div id="tablePagination">
-                            <!-- Pagination will be generated by JavaScript -->
-                        </div>
-                    </div>
+            </div>
+            <div class="card-body p-0">
+                <div class="table-responsive">
+                    <table class="table table-hover mb-0" id="locationTable">
+                        <thead class="table-light">
+                            <tr>
+                                <th style="width: 5%">#</th>
+                                <th style="width: 15%" class="sortable" data-sort="location_code">
+                                    Kode Lokasi <i class="fas fa-sort ms-1"></i>
+                                </th>
+                                <th style="width: 25%" class="sortable" data-sort="location_name">
+                                    Nama Lokasi <i class="fas fa-sort ms-1"></i>
+                                </th>
+                                <th style="width: 10%">Area</th>
+                                <th style="width: 20%">Koordinat</th>
+                                <th style="width: 25%">Aksi</th>
+                            </tr>
+                        </thead>
+                        <tbody id="locationTableBody">
+                            <tr id="loadingRow">
+                                <td colspan="6" class="text-center py-4">
+                                    <div class="d-flex flex-column align-items-center">
+                                        <div class="spinner-border spinner-border-sm text-primary mb-2" role="status">
+                                            <span class="visually-hidden">Loading...</span>
+                                        </div>
+                                        <span class="text-muted">Memuat data lokasi...</span>
+                                    </div>
+                                </td>
+                            </tr>
+                        </tbody>
+                    </table>
+                </div>
+            </div>
+            <div class="card-footer d-flex justify-content-between align-items-center">
+                <div id="tableInfo" class="text-muted">
+                    Menampilkan 0 dari 0 entries
+                </div>
+                <div id="tablePagination">
+                    <!-- Pagination akan diisi oleh JavaScript -->
                 </div>
             </div>
         </div>
     </div>
 </div>
 
+<!-- Leaflet JS -->
+<script src="https://unpkg.com/leaflet@1.9.4/dist/leaflet.js"></script>
+
 <script>
     // Global variables for location data and pagination
     let allLocations = []; // Store all location data
     let currentPage = 1;
     let entriesPerPage = 10;
-    let zoomLevel = 1;
-    const maxZoom = 3;
-    const minZoom = 0.5;
+    let leafletMap;
+    let markers = [];
 
     // Initialize when document is ready
     document.addEventListener('DOMContentLoaded', function () {
+        // Initialize Leaflet map
+        initializeMap();
+
         // Load location data
         loadLocationList();
 
         // Initialize search functionality
         const searchInput = document.getElementById('locationSearch');
         if (searchInput) {
-            searchInput.addEventListener('input', function () {
-                filterLocations();
-            });
+            searchInput.addEventListener('input', debounce(filterLocations, 300));
         }
 
         // Initialize entries per page change
@@ -273,33 +231,118 @@
             entriesSelect.addEventListener('change', function () {
                 entriesPerPage = parseInt(this.value);
                 currentPage = 1;
-                renderLocationTable();
-            });
-        }
-
-        // Initialize map click handler
-        const mapContainer = document.getElementById('mapContainer');
-        if (mapContainer) {
-            mapContainer.addEventListener('click', function (e) {
-                if (e.target.id === 'areaMapping') {
-                    showLocationInfo(e);
-                }
+                filterLocations();
             });
         }
     });
 
+    // Initialize Leaflet map with only Mapping-area.png image
+    function initializeMap() {
+        // Calculate image dimensions for proper display
+        var imageWidth = 1000;  // Adjust based on your image width
+        var imageHeight = 800;  // Adjust based on your image height
+        var bounds = [[0, 0], [imageHeight, imageWidth]];
+
+        // Initialize map without any base layer
+        leafletMap = L.map('leafletMap', {
+            crs: L.CRS.Simple,
+            minZoom: -2,
+            maxZoom: 3,
+            zoomControl: true,
+            attributionControl: false
+        });
+
+        // Add the Mapping-area.png as the main layer
+        L.imageOverlay('<?= base_url("assets/emergency_tools/img/Mapping-area.png") ?>', bounds, {
+            opacity: 1.0
+        }).addTo(leafletMap);
+
+        // Fit map to the bounds of the image and set max bounds
+        leafletMap.fitBounds(bounds);
+
+        // Set maximum zoom out to show only the image (no padding for zoom out limit)
+        leafletMap.setMaxBounds(bounds);
+
+        // Set the initial view to show the entire image at maximum zoom out
+        leafletMap.setView([imageHeight / 2, imageWidth / 2], leafletMap.getBoundsZoom(bounds)); console.log('Leaflet map initialized');
+    }
+
+    // Function to add markers to the map
+    function addMarkersToMap(locations) {
+        console.log('addMarkersToMap called with:', locations);
+
+        // Clear existing markers
+        markers.forEach(marker => leafletMap.removeLayer(marker));
+        markers = [];
+
+        // Add new markers
+        locations.forEach((location, index) => {
+            console.log(`Processing location ${index}:`, location);
+
+            if (location.area_x && location.area_y) {
+                // Convert coordinates to image pixel coordinates
+                const x = parseFloat(location.area_x);
+                const y = parseFloat(location.area_y);
+
+                console.log(`Creating marker at coordinates: ${x}, ${y}`);
+
+                // Create custom marker icon
+                const markerIcon = L.divIcon({
+                    className: 'custom-div-icon',
+                    html: '<div style="width: 16px; height: 16px; background: #dc3545; border: 3px solid white; border-radius: 50%; box-shadow: 0 4px 8px rgba(0,0,0,0.3);"></div>',
+                    iconSize: [22, 22],
+                    iconAnchor: [11, 11]
+                });
+
+                // Create marker using the stored coordinates as pixel positions
+                const marker = L.marker([x, y], {
+                    icon: markerIcon
+                }).addTo(leafletMap);
+
+                // Add popup with location info
+                const popupContent = `
+                    <div class="custom-popup">
+                        <div class="popup-title">${escapeHtml(location.location_name)}</div>
+                        <div class="popup-content">
+                            <strong>Kode:</strong> ${escapeHtml(location.location_code)}<br>
+                            <strong>Area:</strong> ${escapeHtml(location.area_code || '-')}<br>
+                            <strong>Koordinat:</strong> ${location.area_x}, ${location.area_y}
+                        </div>
+                        <div class="mt-2">
+                            <button class="btn btn-sm btn-primary" onclick="editLocation(${location.id})">
+                                <i class="fas fa-edit"></i> Edit
+                            </button>
+                            <button class="btn btn-sm btn-danger" onclick="deleteLocation(${location.id})">
+                                <i class="fas fa-trash"></i> Hapus
+                            </button>
+                        </div>
+                    </div>
+                `;
+
+                marker.bindPopup(popupContent);
+                markers.push(marker);
+                console.log(`Marker ${index} created successfully`);
+            } else {
+                console.log(`Skipping location ${index} - missing coordinates`);
+            }
+        });
+
+        console.log(`Total markers created: ${markers.length}`);
+    }
+
     // Function to filter locations based on search
     function filterLocations() {
         const searchTerm = document.getElementById('locationSearch').value.toLowerCase();
-        const filteredLocations = allLocations.filter(location => {
-            return location.location_code.toLowerCase().includes(searchTerm) ||
-                location.location_name.toLowerCase().includes(searchTerm) ||
-                (location.desc && location.desc.toLowerCase().includes(searchTerm)) ||
-                (location.area_code && location.area_code.toLowerCase().includes(searchTerm));
-        });
+        const filteredLocations = allLocations.filter(location =>
+            location.location_code.toLowerCase().includes(searchTerm) ||
+            location.location_name.toLowerCase().includes(searchTerm) ||
+            (location.area_code && location.area_code.toLowerCase().includes(searchTerm))
+        );
 
         currentPage = 1;
         renderLocationTable(filteredLocations);
+        addMarkersToMap(filteredLocations);
+        updateLocationCount(filteredLocations.length);
     }
 
     // Function to render location table with pagination
@@ -316,44 +359,53 @@
         if (pageLocations.length === 0) {
             tbody.innerHTML = `
                 <tr>
-                    <td colspan="7" class="text-center text-muted py-4">
-                        <i class="fas fa-inbox fa-3x mb-3 d-block"></i>
-                        Tidak ada data yang ditemukan
+                    <td colspan="6" class="text-center py-4">
+                        <i class="fas fa-search fa-2x text-muted mb-3"></i>
+                        <p class="text-muted mb-0">Tidak ada data lokasi yang ditemukan</p>
                     </td>
                 </tr>
             `;
         } else {
             pageLocations.forEach((location, index) => {
-                const row = document.createElement('tr');
-                row.innerHTML = `
-                    <td>${startIndex + index + 1}</td>
-                    <td>
-                        <span class="fw-bold text-primary">${escapeHtml(location.location_code)}</span>
-                    </td>
-                    <td>
-                        <div class="fw-bold">${escapeHtml(location.location_name)}</div>
-                    </td>
-                    <td>
-                        <small class="text-muted">${escapeHtml(location.desc || '-')}</small>
-                    </td>
-                    <td>
-                        <span class="badge bg-info">${escapeHtml(location.area_code || '-')}</span>
-                    </td>
-                    <td>
-                        <small class="text-muted">(${location.area_x || 0}, ${location.area_y || 0})</small>
-                    </td>
-                    <td>
-                        <div class="btn-group btn-group-sm">
-                            <a href="<?= base_url('emergency_tools/master_location/edit/') ?>${location.id}" class="btn btn-warning" title="Edit">
-                                <i class="fas fa-edit"></i>
-                            </a>
-                            <button class="btn btn-danger" onclick="deleteLocation(${location.id})" title="Delete">
-                                <i class="fas fa-trash"></i>
-                            </button>
-                        </div>
-                    </td>
+                const row = `
+                    <tr>
+                        <td>${startIndex + index + 1}</td>
+                        <td>
+                            <span class="badge bg-secondary">${escapeHtml(location.location_code)}</span>
+                        </td>
+                        <td>
+                            <strong>${escapeHtml(location.location_name)}</strong>
+                            ${location.desc ? `<br><small class="text-muted">${escapeHtml(location.desc)}</small>` : ''}
+                        </td>
+                        <td>
+                            <span class="badge bg-info">${escapeHtml(location.area_code || '-')}</span>
+                        </td>
+                        <td>
+                            <small class="text-muted">
+                                ${location.area_x && location.area_y ?
+                        `${parseFloat(location.area_x).toFixed(2)},<br>${parseFloat(location.area_y).toFixed(2)}` :
+                        '-'}
+                            </small>
+                        </td>
+                        <td>
+                            <div class="btn-group" role="group">
+                                <button type="button" class="btn btn-sm btn-outline-primary" 
+                                        onclick="editLocation(${location.id})" title="Edit Lokasi">
+                                    <i class="fas fa-edit"></i>
+                                </button>
+                                <button type="button" class="btn btn-sm btn-outline-success" 
+                                        onclick="viewOnMap(${location.area_x}, ${location.area_y})" title="Lihat di Peta">
+                                    <i class="fas fa-map-marker-alt"></i>
+                                </button>
+                                <button type="button" class="btn btn-sm btn-outline-danger" 
+                                        onclick="deleteLocation(${location.id})" title="Hapus Lokasi">
+                                    <i class="fas fa-trash"></i>
+                                </button>
+                            </div>
+                        </td>
+                    </tr>
                 `;
-                tbody.appendChild(row);
+                tbody.innerHTML += row;
             });
         }
 
@@ -366,10 +418,10 @@
     function updateTableInfo(total, start, end) {
         const tableInfo = document.getElementById('tableInfo');
         if (tableInfo) {
-            if (total === 0) {
-                tableInfo.textContent = 'Tidak ada data yang ditemukan';
+            if (total > 0) {
+                tableInfo.textContent = `Menampilkan ${start} sampai ${end} dari ${total} entries`;
             } else {
-                tableInfo.textContent = `Menampilkan ${start} sampai ${end} dari ${total} data`;
+                tableInfo.textContent = 'Menampilkan 0 dari 0 entries';
             }
         }
     }
@@ -388,7 +440,13 @@
 
         // Previous button
         if (currentPage > 1) {
-            paginationHTML += `<li class="page-item"><a class="page-link" href="#" onclick="changePage(${currentPage - 1})">‹</a></li>`;
+            paginationHTML += `
+                <li class="page-item">
+                    <a class="page-link" href="#" onclick="changePage(${currentPage - 1}); return false;">
+                        <i class="fas fa-chevron-left"></i>
+                    </a>
+                </li>
+            `;
         }
 
         // Page numbers
@@ -396,13 +454,23 @@
             if (i === currentPage) {
                 paginationHTML += `<li class="page-item active"><span class="page-link">${i}</span></li>`;
             } else {
-                paginationHTML += `<li class="page-item"><a class="page-link" href="#" onclick="changePage(${i})">${i}</a></li>`;
+                paginationHTML += `
+                    <li class="page-item">
+                        <a class="page-link" href="#" onclick="changePage(${i}); return false;">${i}</a>
+                    </li>
+                `;
             }
         }
 
         // Next button
         if (currentPage < totalPages) {
-            paginationHTML += `<li class="page-item"><a class="page-link" href="#" onclick="changePage(${currentPage + 1})">›</a></li>`;
+            paginationHTML += `
+                <li class="page-item">
+                    <a class="page-link" href="#" onclick="changePage(${currentPage + 1}); return false;">
+                        <i class="fas fa-chevron-right"></i>
+                    </a>
+                </li>
+            `;
         }
 
         paginationHTML += '</ul></nav>';
@@ -424,247 +492,199 @@
             '"': '&quot;',
             "'": '&#039;'
         };
-        return text.replace(/[&<>"']/g, function (m) { return map[m]; });
-    }
-
-    // Function to show location info when clicking main map
-    function showLocationInfo(event) {
-        const img = event.target;
-        const rect = img.getBoundingClientRect();
-        const x = event.clientX - rect.left;
-        const y = event.clientY - rect.top;
-
-        // Calculate area code
-        const gridX = Math.floor((x / rect.width) * 8);
-        const gridY = Math.floor((y / rect.height) * 4);
-        const areaCode = String.fromCharCode(65 + gridY) + (gridX + 1);
-
-        // Show tooltip or info
-        showAlert(`Area: ${areaCode} - Posisi: (${Math.round((x / rect.width) * 800)}, ${Math.round((y / rect.height) * 400)})`, 'info');
-    }
-
-    // Zoom functions untuk main map
-    function zoomIn() {
-        if (zoomLevel < maxZoom) {
-            zoomLevel += 0.25;
-            applyZoom();
-        }
-    }
-
-    function zoomOut() {
-        if (zoomLevel > minZoom) {
-            zoomLevel -= 0.25;
-            applyZoom();
-        }
-    }
-
-    function resetZoom() {
-        zoomLevel = 1;
-        applyZoom();
-    }
-
-    function applyZoom() {
-        const mapImage = document.getElementById('areaMapping');
-        mapImage.style.transform = `scale(${zoomLevel})`;
-        mapImage.style.transformOrigin = 'center center';
-
-        // Update markers position based on zoom
-        updateAllMarkersPosition();
+        return text ? text.toString().replace(/[&<>"']/g, function (m) { return map[m]; }) : '';
     }
 
     // Function to show alert messages using SweetAlert2
     function showAlert(message, type = 'success') {
+        // Check if SweetAlert2 is available
+        if (typeof Swal === 'undefined') {
+            console.warn('SweetAlert2 not available, using standard alert');
+            alert(message);
+            return;
+        }
+
         let icon = 'success';
         let confirmButtonColor = '#28a745';
 
         switch (type) {
             case 'error':
-            case 'danger':
                 icon = 'error';
                 confirmButtonColor = '#dc3545';
                 break;
             case 'warning':
                 icon = 'warning';
-                confirmButtonColor = '#f39c12';
+                confirmButtonColor = '#ffc107';
                 break;
             case 'info':
                 icon = 'info';
-                confirmButtonColor = '#3085d6';
+                confirmButtonColor = '#17a2b8';
                 break;
-            default:
-                icon = 'success';
-                confirmButtonColor = '#28a745';
         }
 
         Swal.fire({
             icon: icon,
-            title: type === 'success' ? 'Berhasil!' : type === 'error' ? 'Error!' : type === 'warning' ? 'Peringatan!' : 'Informasi!',
+            title: type === 'success' ? 'Berhasil!' : (type === 'error' ? 'Error!' : 'Informasi'),
             text: message,
             confirmButtonColor: confirmButtonColor,
-            timer: type === 'success' ? 3000 : null,
-            timerProgressBar: type === 'success' ? true : false,
             showConfirmButton: type !== 'success'
         });
     }
 
     // Function to load and refresh location list
     function loadLocationList() {
-        fetch('<?= base_url('emergency_tools/master_location/api/get') ?>')
-            .then(response => response.json())
+        console.log('loadLocationList called');
+
+        // Show loading state
+        showLoadingState();
+
+        const url = '<?= base_url("index.php/emergency_tools/master_location/api/get") ?>';
+        console.log('Fetching from URL:', url);
+
+        fetch(url)
+            .then(response => {
+                console.log('Response received:', response.status, response.statusText);
+                if (!response.ok) {
+                    throw new Error(`HTTP error! status: ${response.status}`);
+                }
+                return response.json();
+            })
             .then(data => {
-                if (data.success || data.status === 'success') {
-                    allLocations = data.data || data || [];
+                console.log('Data received:', data);
+                if (data.success) {
+                    allLocations = data.data;
+                    console.log('allLocations set to:', allLocations);
                     renderLocationTable();
-                    updateLocationMarkers(allLocations);
+                    addMarkersToMap(allLocations);
+                    updateLocationCount(allLocations.length);
+                    console.log('Loaded locations:', allLocations);
                 } else {
-                    console.error('Error loading locations:', data.message);
-                    allLocations = [];
-                    renderLocationTable();
+                    console.error('Failed to load locations:', data.message);
+                    showAlert('Gagal memuat data lokasi: ' + data.message, 'error');
+                    showEmptyState();
                 }
             })
             .catch(error => {
                 console.error('Error loading locations:', error);
-                allLocations = [];
-                renderLocationTable();
+                showAlert('Terjadi kesalahan saat memuat data lokasi', 'error');
+                showEmptyState();
             });
     }
 
-    // Function to update location markers on map
-    function updateLocationMarkers(locations) {
-        const markersContainer = document.getElementById('locationMarkers');
-        if (!markersContainer) return;
+    // Function to view location on map
+    function viewOnMap(lat, lng) {
+        if (lat && lng) {
+            const x = parseFloat(lat);
+            const y = parseFloat(lng);
 
-        // Clear existing markers
-        markersContainer.innerHTML = '';
+            leafletMap.setView([x, y], 0); // Use zoom level 0 for better visibility within image bounds
 
-        // Add markers for each location
-        locations.forEach(location => {
-            if (location.area_x !== null && location.area_y !== null) {
-                addLocationMarkerToMap(location);
-            }
-        });
+            // Find and open the popup for this location
+            markers.forEach(marker => {
+                const markerLatLng = marker.getLatLng();
+                if (Math.abs(markerLatLng.lat - x) < 0.1 &&
+                    Math.abs(markerLatLng.lng - y) < 0.1) {
+                    marker.openPopup();
+                }
+            });
+        }
     }
 
-    // Function to add single marker to map
-    function addLocationMarkerToMap(location) {
-        const markersContainer = document.getElementById('locationMarkers');
-        if (!markersContainer) return;
-
-        // Create marker element
-        const marker = document.createElement('div');
-        marker.className = 'location-marker';
-        marker.setAttribute('data-location-id', location.id);
-        marker.setAttribute('data-location-name', location.location_name);
-        marker.setAttribute('data-area-code', location.area_code);
-        marker.setAttribute('data-x', location.area_x);
-        marker.setAttribute('data-y', location.area_y);
-        marker.style.pointerEvents = 'auto'; // Enable clicks
-
-        // Position marker based on stored coordinates
-        positionMarker(marker, location.area_x, location.area_y);
-
-        // Add click event for marker info
-        marker.addEventListener('click', function (e) {
-            e.stopPropagation();
-            showLocationDetails(location);
-        });
-
-        // Add tooltip
-        marker.title = `${location.location_name} (${location.location_code})`;
-
-        markersContainer.appendChild(marker);
-    }
-
-    // Function to position marker based on coordinates and current zoom
-    function positionMarker(marker, x, y) {
-        const mapContainer = document.getElementById('mapContainer');
-        const mapImage = document.getElementById('areaMapping');
-
-        if (!mapContainer || !mapImage) return;
-
-        const containerRect = mapContainer.getBoundingClientRect();
-        const imageRect = mapImage.getBoundingClientRect();
-
-        // Calculate the actual position within the container
-        const imageOffsetX = imageRect.left - containerRect.left;
-        const imageOffsetY = imageRect.top - containerRect.top;
-
-        // Calculate position as percentage of image size
-        const xPercent = (parseInt(x) / 800); // 800 is original map width
-        const yPercent = (parseInt(y) / 400); // 400 is original map height
-
-        // Calculate actual pixel position
-        const actualX = imageOffsetX + (xPercent * imageRect.width);
-        const actualY = imageOffsetY + (yPercent * imageRect.height);
-
-        marker.style.left = actualX + 'px';
-        marker.style.top = actualY + 'px';
-    }
-
-    // Function to update all markers position when zooming
-    function updateAllMarkersPosition() {
-        const markers = document.querySelectorAll('#locationMarkers .location-marker');
-        markers.forEach(marker => {
-            const x = marker.getAttribute('data-x');
-            const y = marker.getAttribute('data-y');
-            if (x !== null && y !== null) {
-                positionMarker(marker, x, y);
-            }
-        });
-    }
-
-    // Function to show location details when marker is clicked
-    function showLocationDetails(location) {
-        showAlert(`Lokasi: ${location.location_name} (${location.location_code}) - Area: ${location.area_code}`, 'info');
+    // Function to edit location
+    function editLocation(id) {
+        window.location.href = `<?= base_url('index.php/emergency_tools/master_location/edit') ?>/${id}`;
     }
 
     // Delete location function with SweetAlert2 confirmation
     function deleteLocation(id) {
         Swal.fire({
-            title: 'Apakah Anda yakin?',
-            text: "Data lokasi ini akan dihapus permanen dan tidak dapat dikembalikan!",
+            title: 'Konfirmasi Hapus',
+            text: 'Apakah Anda yakin ingin menghapus lokasi ini? Data yang dihapus tidak dapat dikembalikan.',
             icon: 'warning',
             showCancelButton: true,
             confirmButtonColor: '#dc3545',
             cancelButtonColor: '#6c757d',
             confirmButtonText: 'Ya, Hapus!',
-            cancelButtonText: 'Batal',
-            reverseButtons: true
+            cancelButtonText: 'Batal'
         }).then((result) => {
             if (result.isConfirmed) {
-                // Show loading
-                Swal.fire({
-                    title: 'Menghapus...',
-                    text: 'Sedang menghapus data lokasi',
-                    allowOutsideClick: false,
-                    didOpen: () => {
-                        Swal.showLoading();
-                    }
-                });
-
-                // AJAX delete request
-                fetch('<?= base_url('emergency_tools/master_location/api/delete/') ?>' + id, {
+                fetch(`<?= base_url('index.php/emergency_tools/master_location/api/delete') ?>/${id}`, {
                     method: 'POST',
                     headers: {
-                        'Content-Type': 'application/x-www-form-urlencoded',
-                    },
-                    body: 'id=' + id
+                        'Content-Type': 'application/json',
+                    }
                 })
                     .then(response => response.json())
                     .then(data => {
-                        if (data.success || data.status === 'success') {
-                            showAlert(data.message || 'Lokasi berhasil dihapus', 'success');
-                            // Reload location list
-                            loadLocationList();
+                        if (data.success) {
+                            showAlert(data.message, 'success');
+                            loadLocationList(); // Refresh the list
                         } else {
-                            showAlert(data.message || 'Gagal menghapus lokasi', 'error');
+                            showAlert(data.message, 'error');
                         }
                     })
                     .catch(error => {
-                        console.error('Error:', error);
-                        showAlert('Gagal menghapus lokasi!', 'error');
+                        console.error('Error deleting location:', error);
+                        showAlert('Terjadi kesalahan saat menghapus lokasi', 'error');
                     });
             }
         });
+    }
+
+    // Debounce function for search input
+    function debounce(func, wait) {
+        let timeout;
+        return function executedFunction(...args) {
+            const later = () => {
+                clearTimeout(timeout);
+                func(...args);
+            };
+            clearTimeout(timeout);
+            timeout = setTimeout(later, wait);
+        };
+    }
+
+    // Utility functions for loading states
+    function showLoadingState() {
+        const tbody = document.getElementById('locationTableBody');
+        tbody.innerHTML = `
+            <tr id="loadingRow">
+                <td colspan="6" class="text-center py-4">
+                    <div class="d-flex flex-column align-items-center">
+                        <div class="spinner-border spinner-border-sm text-primary mb-2" role="status">
+                            <span class="visually-hidden">Loading...</span>
+                        </div>
+                        <span class="text-muted">Memuat data lokasi...</span>
+                    </div>
+                </td>
+            </tr>
+        `;
+    }
+
+    function showEmptyState() {
+        const tbody = document.getElementById('locationTableBody');
+        tbody.innerHTML = `
+            <tr>
+                <td colspan="6" class="text-center py-4">
+                    <div class="d-flex flex-column align-items-center">
+                        <i class="fas fa-exclamation-circle fa-2x text-muted mb-2"></i>
+                        <span class="text-muted">Tidak ada data lokasi</span>
+                    </div>
+                </td>
+            </tr>
+        `;
+    }
+
+    function updateLocationCount(count) {
+        const countElement = document.getElementById('locationCount');
+        if (countElement) {
+            countElement.textContent = `(${count} items)`;
+        }
+    }
+
+    // Refresh data function
+    function refreshData() {
+        console.log('Refreshing location data...');
+        loadLocationList();
     }
 </script>

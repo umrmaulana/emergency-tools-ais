@@ -8,8 +8,8 @@ class Report extends CI_Controller
     {
         parent::__construct();
         $this->_check_auth();
-        $this->load->model('Equipment_model');
-        $this->load->model('Inspection_model');
+        $this->load->model('emergency_tools/Equipment_model');
+        $this->load->model('emergency_tools/Inspection_model');
     }
 
     /**
