@@ -469,7 +469,7 @@
                         const qrUrl = base_url() + equipment.qrcode;
 
                         qrPreview.innerHTML = `
-                        <img src="${qrUrl}" alt="QR Code Preview" title="QR Code: ${equipment.equipment_code}">
+                        <img src="${qrUrl}" class="qr-code-img" alt="QR Code Preview" title="QR Code: ${equipment.equipment_code}">
                         <div class="mt-2 small text-muted">${equipment.equipment_code}</div>
                     `;
                     } else {
