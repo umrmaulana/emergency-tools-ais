@@ -35,12 +35,35 @@ class Report extends CI_Controller
      */
     public function approve($inspection_id)
     {
-        if ($this->input->post()) {
+        // Set JSON response header for AJAX requests
+        if ($this->input->is_ajax_request()) {
+            $this->output->set_content_type('application/json');
+        }
+
+        if ($this->input->post() || $this->input->is_ajax_request()) {
+            $notes = $this->input->post('notes');
+
             $result = $this->Inspection_model->update_approval(
                 $inspection_id,
                 'approved',
-                $this->session->userdata('user_id')
+                $this->session->userdata('user_id'),
+                $notes
             );
+
+            if ($this->input->is_ajax_request()) {
+                if ($result) {
+                    $this->output->set_output(json_encode([
+                        'success' => true,
+                        'message' => 'Inspection berhasil di-approve!'
+                    ]));
+                } else {
+                    $this->output->set_output(json_encode([
+                        'success' => false,
+                        'message' => 'Gagal approve inspection!'
+                    ]));
+                }
+                return;
+            }
 
             if ($result) {
                 $this->session->set_flashdata('success', 'Inspection berhasil di-approve!');
@@ -56,12 +79,35 @@ class Report extends CI_Controller
      */
     public function reject($inspection_id)
     {
-        if ($this->input->post()) {
+        // Set JSON response header for AJAX requests
+        if ($this->input->is_ajax_request()) {
+            $this->output->set_content_type('application/json');
+        }
+
+        if ($this->input->post() || $this->input->is_ajax_request()) {
+            $notes = $this->input->post('notes');
+
             $result = $this->Inspection_model->update_approval(
                 $inspection_id,
                 'rejected',
-                $this->session->userdata('user_id')
+                $this->session->userdata('user_id'),
+                $notes
             );
+
+            if ($this->input->is_ajax_request()) {
+                if ($result) {
+                    $this->output->set_output(json_encode([
+                        'success' => true,
+                        'message' => 'Inspection berhasil di-reject!'
+                    ]));
+                } else {
+                    $this->output->set_output(json_encode([
+                        'success' => false,
+                        'message' => 'Gagal reject inspection!'
+                    ]));
+                }
+                return;
+            }
 
             if ($result) {
                 $this->session->set_flashdata('success', 'Inspection berhasil di-reject!');
@@ -70,6 +116,79 @@ class Report extends CI_Controller
             }
         }
         redirect('emergency_tools/report');
+    }
+
+    /**
+     * API endpoints
+     */
+    public function api($action = null, $id = null)
+    {
+        // Set JSON response header
+        $this->output->set_content_type('application/json');
+
+        switch ($action) {
+            case 'get':
+                $this->_api_get_inspections();
+                break;
+            case 'detail':
+                $this->_api_get_inspection_detail($id);
+                break;
+            default:
+                $this->output->set_output(json_encode([
+                    'success' => false,
+                    'message' => 'Invalid API endpoint'
+                ]));
+        }
+    }
+
+    /**
+     * Get inspections data via API
+     */
+    private function _api_get_inspections()
+    {
+        try {
+            $inspections = $this->Inspection_model->get_all_inspections(100);
+
+            $this->output->set_output(json_encode([
+                'success' => true,
+                'data' => $inspections,
+                'message' => 'Data loaded successfully'
+            ]));
+        } catch (Exception $e) {
+            $this->output->set_output(json_encode([
+                'success' => false,
+                'message' => 'Failed to load inspection data: ' . $e->getMessage()
+            ]));
+        }
+    }
+
+    /**
+     * Get inspection detail via API
+     */
+    private function _api_get_inspection_detail($id)
+    {
+        try {
+            if (!$id) {
+                throw new Exception('Inspection ID is required');
+            }
+
+            $inspection = $this->Inspection_model->get_inspection_detail($id);
+
+            if (!$inspection) {
+                throw new Exception('Inspection not found');
+            }
+
+            $this->output->set_output(json_encode([
+                'success' => true,
+                'data' => $inspection,
+                'message' => 'Inspection detail loaded successfully'
+            ]));
+        } catch (Exception $e) {
+            $this->output->set_output(json_encode([
+                'success' => false,
+                'message' => $e->getMessage()
+            ]));
+        }
     }
 
     /**
