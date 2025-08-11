@@ -55,6 +55,7 @@ class Inspection_model extends CI_Model
     public function get_all_inspections($limit = null, $offset = null)
     {
         $this->db->select('insp.*, eq.equipment_code, eq.equipment_type_id, u.name as inspector_name,
+                          CONCAT(et.equipment_name, " - ", et.equipment_type) as name,
                           et.equipment_name, et.equipment_type, loc.location_name, u.level as inspector_level');
         $this->db->from('tr_inspections insp');
         $this->db->join('tm_equipments eq', 'eq.id = insp.equipment_id', 'left');

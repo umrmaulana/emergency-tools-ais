@@ -180,7 +180,7 @@
                                                     <strong
                                                         class="text-primary"><?= htmlspecialchars($inspection->equipment_code ?? 'N/A') ?></strong><br>
                                                     <small
-                                                        class="text-muted"><?= htmlspecialchars($inspection->equipment_name ?? 'N/A') ?></small><br>
+                                                        class="text-muted"><?= htmlspecialchars($inspection->name ?? 'N/A') ?></small><br>
                                                     <small
                                                         class="badge bg-light text-dark"><?= htmlspecialchars($inspection->location_name ?? 'N/A') ?></small>
                                                 </div>

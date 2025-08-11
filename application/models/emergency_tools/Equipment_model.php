@@ -70,24 +70,13 @@ class Equipment_model extends CI_Model
     }
 
     /**
-     * Get equipment by location
-     */
-    public function get_equipment_by_location($location_id)
-    {
-        $this->db->select('eq.*, loc.location_name');
-        $this->db->from('tm_equipments eq');
-        $this->db->join('tm_locations loc', 'loc.id = eq.location_id', 'left');
-        $this->db->where('eq.location_id', $location_id);
-        return $this->db->get()->result();
-    }
-
-    /**
      * Get equipment with location coordinates for mapping
      */
     public function get_equipment_with_location()
     {
         $this->db->select('eq.id, eq.equipment_code, eq.status, eq.last_check_date, 
                           loc.location_name, loc.area_x, loc.area_y, loc.area_code,
+                          CONCAT(et.equipment_name, " - ", et.equipment_type) as name,
                           et.equipment_name, et.equipment_type, et.icon_url');
         $this->db->from('tm_equipments eq');
         $this->db->join('tm_locations loc', 'loc.id = eq.location_id', 'left');
