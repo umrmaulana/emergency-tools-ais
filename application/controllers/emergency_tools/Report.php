@@ -179,7 +179,7 @@ class Report extends CI_Controller
     public function api($action = null, $id = null)
     {
         // Set JSON response header
-        $this->output->set_content_type('application/json');
+        header('Content-Type: application/json');
 
         switch ($action) {
             case 'get':
@@ -189,10 +189,10 @@ class Report extends CI_Controller
                 $this->_api_get_inspection_detail($id);
                 break;
             default:
-                $this->output->set_output(json_encode([
+                echo json_encode([
                     'success' => false,
                     'message' => 'Invalid API endpoint'
-                ]));
+                ]);
         }
     }
 
@@ -204,16 +204,16 @@ class Report extends CI_Controller
         try {
             $inspections = $this->Inspection_model->get_all_inspections(100);
 
-            $this->output->set_output(json_encode([
+            echo json_encode([
                 'success' => true,
                 'data' => $inspections,
                 'message' => 'Data loaded successfully'
-            ]));
+            ]);
         } catch (Exception $e) {
-            $this->output->set_output(json_encode([
+            echo json_encode([
                 'success' => false,
                 'message' => 'Failed to load inspection data: ' . $e->getMessage()
-            ]));
+            ]);
         }
     }
 
@@ -227,22 +227,22 @@ class Report extends CI_Controller
                 throw new Exception('Inspection ID is required');
             }
 
-            $inspection = $this->Inspection_model->get_inspection_detail($id);
+            $inspection = $this->Inspection_model->get_inspection_details($id);
 
             if (!$inspection) {
                 throw new Exception('Inspection not found');
             }
 
-            $this->output->set_output(json_encode([
+            echo json_encode([
                 'success' => true,
                 'data' => $inspection,
                 'message' => 'Inspection detail loaded successfully'
-            ]));
+            ]);
         } catch (Exception $e) {
-            $this->output->set_output(json_encode([
+            echo json_encode([
                 'success' => false,
                 'message' => $e->getMessage()
-            ]));
+            ]);
         }
     }
 

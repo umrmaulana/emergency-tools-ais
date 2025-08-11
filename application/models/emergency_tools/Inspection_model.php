@@ -120,27 +120,44 @@ class Inspection_model extends CI_Model
     }
 
     /**
-     * Get inspection details dengan detail items
+     * Get inspection details dengan detail items dan gambar
      */
     public function get_inspection_details($inspection_id)
     {
         $this->db->select('insp.*, eq.equipment_code, eq.equipment_type_id, u.name as inspector_name, 
-                          app_user.name as approved_by_name');
+                          app_user.name as approved_by_name, et.equipment_name, et.equipment_type, 
+                          loc.location_name');
         $this->db->from('tr_inspections insp');
         $this->db->join('tm_equipments eq', 'eq.id = insp.equipment_id', 'left');
         $this->db->join('users u', 'u.id = insp.user_id', 'left');
         $this->db->join('users app_user', 'app_user.id = insp.approved_by', 'left');
+        $this->db->join('tm_master_equipment_types et', 'et.id = eq.equipment_type_id', 'left');
+        $this->db->join('tm_locations loc', 'loc.id = eq.location_id', 'left');
         $this->db->where('insp.id', $inspection_id);
 
         $inspection = $this->db->get()->row();
 
         if ($inspection) {
-            // Get detail items
-            $this->db->select('det.*, cs.item_name, cs.standar_condition');
+            // Get detail items dengan gambar
+            $this->db->select('det.*, cs.item_name, cs.standar_condition, cs.standar_picture_url');
             $this->db->from('tr_inspection_details det');
             $this->db->join('tm_checksheet_templates cs', 'cs.id = det.checksheet_item_id', 'left');
             $this->db->where('det.inspection_id', $inspection_id);
+            $this->db->order_by('cs.order_number', 'ASC');
             $inspection->details = $this->db->get()->result();
+
+            // Get attachments untuk setiap detail
+            if (!empty($inspection->details)) {
+                foreach ($inspection->details as $detail) {
+                    $this->db->select('*');
+                    $this->db->from('tr_attachments');
+                    $this->db->where('inspection_detail_id', $detail->id);
+                    $detail->attachments = $this->db->get()->result();
+
+                    // Add actual_condition from note field (since table doesn't have actual_condition column)
+                    $detail->actual_condition = $detail->note;
+                }
+            }
         }
 
         return $inspection;

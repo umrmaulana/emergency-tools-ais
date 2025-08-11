@@ -7,6 +7,24 @@
                     <p class="text-muted mb-0">Kelola laporan pengecekan dan approval</p>
                 </div>
                 <div class="d-flex gap-2">
+                    <div class="input-group" style="width: 250px;">
+                        <span class="input-group-text"><i class="fas fa-calendar-alt"></i></span>
+                        <select class="form-select" id="monthFilter" onchange="filterByMonth()">
+                            <option value="">Pilih Bulan...</option>
+                            <option value="01">Januari</option>
+                            <option value="02">Februari</option>
+                            <option value="03">Maret</option>
+                            <option value="04">April</option>
+                            <option value="05">Mei</option>
+                            <option value="06">Juni</option>
+                            <option value="07">Juli</option>
+                            <option value="08">Agustus</option>
+                            <option value="09">September</option>
+                            <option value="10">Oktober</option>
+                            <option value="11">November</option>
+                            <option value="12">Desember</option>
+                        </select>
+                    </div>
                     <button class="btn btn-outline-secondary" onclick="refreshData()" title="Refresh Data"
                         data-bs-toggle="tooltip">
                         <i class="fas fa-sync-alt"></i>
@@ -163,7 +181,8 @@
                                 <!-- Data inspections dari PHP -->
                                 <?php if (isset($inspections) && count($inspections) > 0): ?>
                                     <?php foreach ($inspections as $index => $inspection): ?>
-                                        <tr class="inspection-row" data-inspection-id="<?= $inspection->id ?>">
+                                        <tr class="inspection-row" data-inspection-id="<?= $inspection->id ?>"
+                                            data-inspection-date="<?= date('Y-m', strtotime($inspection->inspection_date)) ?>">
                                             <td>
                                                 <input type="checkbox" class="form-check-input inspection-checkbox"
                                                     value="<?= $inspection->id ?>">
@@ -378,6 +397,27 @@
     </div>
 </div>
 
+<!-- Image Preview Modal -->
+<div class="modal fade" id="imagePreviewModal" tabindex="-1">
+    <div class="modal-dialog modal-lg">
+        <div class="modal-content">
+            <div class="modal-header">
+                <h5 class="modal-title" id="imagePreviewTitle">Image Preview</h5>
+                <button type="button" class="btn-close" data-bs-dismiss="modal"></button>
+            </div>
+            <div class="modal-body text-center">
+                <img id="imagePreviewImg" src="" class="img-fluid" style="max-height: 70vh;" alt="Preview">
+            </div>
+            <div class="modal-footer">
+                <button type="button" class="btn btn-secondary" data-bs-dismiss="modal">Close</button>
+                <a id="imageDownloadBtn" href="" download class="btn btn-primary">
+                    <i class="fas fa-download me-1"></i>Download
+                </a>
+            </div>
+        </div>
+    </div>
+</div>
+
 <!-- Leaflet CSS dan JS -->
 <link href="https://unpkg.com/leaflet@1.7.1/dist/leaflet.css" rel="stylesheet" />
 <script src="https://unpkg.com/leaflet@1.7.1/dist/leaflet.js"></script>
@@ -510,10 +550,25 @@
         right: -5px;
         width: 12px;
         height: 12px;
-        background: #ffc107;
         border: 2px solid white;
         border-radius: 50%;
         animation: pulse 2s infinite;
+    }
+
+    /* Status indicator colors */
+    .approval-indicator.status-not-checked {
+        background: #dc3545;
+        /* Merah - belum di cek */
+    }
+
+    .approval-indicator.status-pending {
+        background: #ffc107;
+        /* Kuning - sudah dicek tapi belum approved */
+    }
+
+    .approval-indicator.status-approved {
+        background: #28a745;
+        /* Hijau - sudah dicek dan approved */
     }
 
     @keyframes pulse {
@@ -528,6 +583,31 @@
         100% {
             box-shadow: 0 0 0 0 rgba(255, 193, 7, 0);
         }
+    }
+
+    /* Image thumbnail styling */
+    .inspection-image-thumbnail {
+        border: 2px solid #e9ecef;
+        border-radius: 8px;
+        transition: all 0.3s ease;
+    }
+
+    .inspection-image-thumbnail:hover {
+        border-color: #007bff;
+        transform: scale(1.05);
+        box-shadow: 0 4px 8px rgba(0, 0, 0, 0.2);
+    }
+
+    .inspection-detail-card {
+        border: 1px solid #e9ecef;
+        border-radius: 8px;
+        margin-bottom: 1rem;
+        transition: all 0.3s ease;
+    }
+
+    .inspection-detail-card:hover {
+        border-color: #007bff;
+        box-shadow: 0 2px 8px rgba(0, 123, 255, 0.1);
     }
 </style>
 
@@ -660,6 +740,27 @@
                     statusText = 'Good';
                 }
 
+                // Determine approval status indicator
+                let approvalIndicatorClass = 'status-not-checked'; // Default: red (not checked)
+                let approvalStatusText = 'Belum dicek';
+
+                // Check inspection data from PHP to determine approval status
+                const inspectionData = <?php echo json_encode($inspections ?? []); ?>;
+                const latestInspection = inspectionData.find(insp => insp.equipment_id == equipment.id);
+
+                if (latestInspection) {
+                    if (latestInspection.approval_status === 'approved') {
+                        approvalIndicatorClass = 'status-approved'; // Green
+                        approvalStatusText = 'Sudah dicek dan diapprove';
+                    } else if (latestInspection.approval_status === 'pending') {
+                        approvalIndicatorClass = 'status-pending'; // Yellow 
+                        approvalStatusText = 'Sudah dicek, menunggu approval';
+                    } else if (latestInspection.approval_status === 'rejected') {
+                        approvalIndicatorClass = 'status-pending'; // Yellow for rejected (needs recheck)
+                        approvalStatusText = 'Ditolak, perlu dicek ulang';
+                    }
+                }
+
                 // Create equipment icon - use equipment icon from database if available
                 let equipmentIcon = 'fas fa-fire-extinguisher'; // default icon
                 if (equipment.icon_url) {
@@ -678,17 +779,7 @@
                                 cursor: pointer;
                                 transition: all 0.3s ease;
                             "></div>
-                            <div class="status-indicator" style="
-                                position: absolute; 
-                                bottom: -2px; 
-                                right: -2px; 
-                                width: 14px; 
-                                height: 14px; 
-                                background-color: ${statusColor}; 
-                                border: 2px solid white; 
-                                border-radius: 50%;
-                                box-shadow: 0 1px 3px rgba(0, 0, 0, 0.3);
-                            "></div>
+                            <div class="approval-indicator ${approvalIndicatorClass}" title="${approvalStatusText}"></div>
                         </div>
                     `;
 
@@ -714,6 +805,10 @@
                                     <strong>Status:</strong> 
                                     <span class="badge" style="background-color: ${statusColor}; color: white;">${statusText}</span>
                                 </p>
+                                <p class="mb-1">
+                                    <strong>Approval:</strong> 
+                                    <span class="badge bg-secondary">${approvalStatusText}</span>
+                                </p>
                                 ${lastCheck ?
                                 `<small>Last Check: ${new Date(lastCheck).toLocaleDateString()}</small>` :
                                 '<small>Never checked</small>'
@@ -730,23 +825,26 @@
                 } else {
                     // Fallback to FontAwesome icon if no equipment icon available
                     const markerHtml = `
-                        <div class="custom-equipment-marker" style="
-                            background-color: ${statusColor};
-                            width: 32px;
-                            height: 32px;
-                            border-radius: 50%;
-                            display: flex;
-                            align-items: center;
-                            justify-content: center;
-                            color: white;
-                            font-size: 14px;
-                            font-weight: bold;
-                            box-shadow: 0 3px 10px rgba(0, 0, 0, 0.25);
-                            border: 3px solid white;
-                            cursor: pointer;
-                            transition: all 0.3s ease;
-                        ">
-                            <i class="fas fa-fire-extinguisher"></i>
+                        <div class="equipment-marker-container" style="position: relative;">
+                            <div class="custom-equipment-marker" style="
+                                background-color: ${statusColor};
+                                width: 32px;
+                                height: 32px;
+                                border-radius: 50%;
+                                display: flex;
+                                align-items: center;
+                                justify-content: center;
+                                color: white;
+                                font-size: 14px;
+                                font-weight: bold;
+                                box-shadow: 0 3px 10px rgba(0, 0, 0, 0.25);
+                                border: 3px solid white;
+                                cursor: pointer;
+                                transition: all 0.3s ease;
+                            ">
+                                <i class="fas fa-fire-extinguisher"></i>
+                            </div>
+                            <div class="approval-indicator ${approvalIndicatorClass}" title="${approvalStatusText}"></div>
                         </div>
                     `;
 
@@ -771,6 +869,10 @@
                                 <p class="mb-1">
                                     <strong>Status:</strong> 
                                     <span class="badge" style="background-color: ${statusColor}; color: white;">${statusText}</span>
+                                </p>
+                                <p class="mb-1">
+                                    <strong>Approval:</strong> 
+                                    <span class="badge bg-secondary">${approvalStatusText}</span>
                                 </p>
                                 ${lastCheck ?
                                 `<small>Last Check: ${new Date(lastCheck).toLocaleDateString()}</small>` :
@@ -864,9 +966,9 @@
         }, 1000);
     }
 
-    // Search function
-    function searchInspections() {
-        const searchTerm = document.getElementById('searchInput').value.toLowerCase().trim();
+    // Search function - updated to filter by month
+    function filterByMonth() {
+        const selectedMonth = document.getElementById('monthFilter').value;
         const rows = document.querySelectorAll('.inspection-row');
         const countElement = document.getElementById('inspectionCount');
 
@@ -874,22 +976,41 @@
         let totalRows = rows.length;
 
         rows.forEach(row => {
-            const text = row.textContent.toLowerCase();
-            if (text.includes(searchTerm)) {
+            if (!selectedMonth) {
+                // No filter selected, show all
                 row.style.display = '';
                 visibleCount++;
             } else {
-                row.style.display = 'none';
+                // Filter by selected month
+                const inspectionDate = row.getAttribute('data-inspection-date');
+                if (inspectionDate && inspectionDate.includes(`-${selectedMonth}`)) {
+                    row.style.display = '';
+                    visibleCount++;
+                } else {
+                    row.style.display = 'none';
+                }
             }
         });
 
-        if (searchTerm !== '') {
-            countElement.textContent = `(${visibleCount} dari ${totalRows} items)`;
+        // Update count display
+        if (selectedMonth !== '') {
+            const monthNames = {
+                '01': 'Januari', '02': 'Februari', '03': 'Maret', '04': 'April',
+                '05': 'Mei', '06': 'Juni', '07': 'Juli', '08': 'Agustus',
+                '09': 'September', '10': 'Oktober', '11': 'November', '12': 'Desember'
+            };
+            countElement.textContent = `(${visibleCount} dari ${totalRows} items - ${monthNames[selectedMonth]})`;
             countElement.classList.add('text-primary');
         } else {
             countElement.textContent = `(${totalRows} items)`;
             countElement.classList.remove('text-primary');
         }
+    }
+
+    // Legacy search function (kept for backward compatibility)
+    function searchInspections() {
+        // This function is now handled by filterByMonth
+        filterByMonth();
     }
 
     // Refresh data
@@ -900,7 +1021,8 @@
         refreshIcon.classList.add('fa-spin');
         refreshBtn.disabled = true;
 
-        document.getElementById('searchInput').value = '';
+        // Clear month filter
+        document.getElementById('monthFilter').value = '';
 
         setTimeout(() => {
             window.location.reload();
@@ -1159,25 +1281,35 @@
             </div>
         `;
 
-        setTimeout(() => {
-            const sampleDetail = {
-                id: inspectionId,
-                equipment_code: 'EQ-001',
-                equipment_name: 'Fire Extinguisher',
-                location_name: 'Building A - Floor 1',
-                equipment_type: 'APAR',
-                inspection_date: new Date().toISOString(),
-                inspector_name: 'John Doe',
-                equipment_status: 'good',
-                approval_status: 'pending',
-                notes: 'Equipment dalam kondisi baik, tekanan normal'
-            };
-            displayInspectionDetail(sampleDetail);
-        }, 1000);
+        // Load real data from API
+        fetch(`<?= base_url('emergency_tools/report/api/detail/') ?>${inspectionId}`)
+            .then(response => response.json())
+            .then(data => {
+                if (data.success) {
+                    displayInspectionDetail(data.data);
+                } else {
+                    document.getElementById('inspectionDetailContent').innerHTML = `
+                        <div class="alert alert-danger">
+                            <i class="fas fa-exclamation-triangle me-2"></i>
+                            Error loading inspection detail: ${data.message}
+                        </div>
+                    `;
+                }
+            })
+            .catch(error => {
+                console.error('Error loading inspection detail:', error);
+                document.getElementById('inspectionDetailContent').innerHTML = `
+                    <div class="alert alert-danger">
+                        <i class="fas fa-exclamation-triangle me-2"></i>
+                        Error loading inspection detail: ${error.message}
+                    </div>
+                `;
+            });
     }
 
     function displayInspectionDetail(inspection) {
-        const content = `
+        // Base inspection info
+        let content = `
             <div class="row">
                 <div class="col-md-6">
                     <h6 class="text-primary mb-3">Equipment Information</h6>
@@ -1193,29 +1325,129 @@
                     <table class="table table-sm">
                         <tr><th width="40%">Date:</th><td>${new Date(inspection.inspection_date).toLocaleString('id-ID')}</td></tr>
                         <tr><th>Inspector:</th><td>${inspection.inspector_name || 'N/A'}</td></tr>
-                        <tr><th>Status:</th><td>
-                            <span class="badge bg-${inspection.equipment_status === 'good' ? 'success' : inspection.equipment_status === 'needs_attention' ? 'warning' : inspection.equipment_status === 'critical' ? 'danger' : 'secondary'}">
-                                ${(inspection.equipment_status || 'not_checked').replace('_', ' ').replace(/\b\w/g, l => l.toUpperCase())}
-                            </span>
-                        </td></tr>
                         <tr><th>Approval:</th><td>
                             <span class="badge bg-${inspection.approval_status === 'approved' ? 'success' : inspection.approval_status === 'rejected' ? 'danger' : 'warning'}">
                                 ${(inspection.approval_status || 'pending').charAt(0).toUpperCase() + (inspection.approval_status || 'pending').slice(1)}
                             </span>
                         </td></tr>
+                        ${inspection.approved_by_name ? `<tr><th>Approved By:</th><td>${inspection.approved_by_name}</td></tr>` : ''}
                     </table>
                 </div>
             </div>
-            
-            ${inspection.notes ? `
+        `;
+
+        // Add inspection notes if available
+        if (inspection.notes) {
+            content += `
                 <div class="mt-3">
                     <h6 class="text-primary">Inspection Notes</h6>
                     <div class="bg-light p-3 rounded">
                         ${inspection.notes}
                     </div>
                 </div>
-            ` : ''}
-        `;
+            `;
+        }
+
+        // Add inspection details with images if available
+        if (inspection.details && inspection.details.length > 0) {
+            content += `
+                <div class="mt-4">
+                    <h6 class="text-primary mb-3">Inspection Details</h6>
+                    <div class="row">
+            `;
+
+            inspection.details.forEach((detail, index) => {
+                const statusBadge = detail.status === 'ok' ?
+                    '<span class="badge bg-success">OK</span>' :
+                    '<span class="badge bg-danger">NOT OK</span>';
+
+                content += `
+                    <div class="col-md-12 mb-4">
+                        <div class="card inspection-detail-card">
+                            <div class="card-header d-flex justify-content-between align-items-center">
+                                <h6 class="mb-0">${detail.item_name || 'Inspection Item ' + (index + 1)}</h6>
+                                ${statusBadge}
+                            </div>
+                            <div class="card-body">
+                                <div class="row">
+                                    <div class="col-md-6">
+                                        <table class="table table-sm table-borderless">
+                                            <tr><th>Standard Condition:</th><td>${detail.standar_condition || 'N/A'}</td></tr>
+                                            <tr><th>Actual Condition:</th><td>${detail.actual_condition || detail.note || 'N/A'}</td></tr>
+                                            ${detail.note && detail.note !== detail.actual_condition ? `<tr><th>Additional Note:</th><td>${detail.note}</td></tr>` : ''}
+                                        </table>
+                                    </div>
+                                    <div class="col-md-6">
+                `;
+
+                // Add standard picture if available
+                if (detail.standar_picture_url) {
+                    content += `
+                        <div class="mb-3">
+                            <h6 class="text-muted mb-2"><i class="fas fa-image me-1"></i>Standard Picture:</h6>
+                            <img src="<?= base_url('assets/emergency_tools/img/standars/') ?>${detail.standar_picture_url}" 
+                                 class="img-thumbnail inspection-image-thumbnail" style="max-width: 150px; max-height: 150px; cursor: pointer;"
+                                 onclick="showImageModal('<?= base_url('assets/emergency_tools/img/') ?>${detail.standar_picture_url}', 'Standard Picture - ${detail.item_name}')"
+                                 alt="Standard Picture">
+                        </div>
+                    `;
+                }
+
+                // Add inspection photo if available
+                if (detail.photo_url) {
+                    content += `
+                        <div class="mb-3">
+                            <h6 class="text-muted mb-2"><i class="fas fa-camera me-1"></i>Inspection Photo:</h6>
+                            <img src="https://prisma.umrmaulana.my.id/assets/emergency_tools/img/${detail.photo_url}" 
+                                 class="img-thumbnail inspection-image-thumbnail" style="max-width: 150px; max-height: 150px; cursor: pointer;"
+                                 onclick="showImageModal('https://prisma.umrmaulana.my.id/assets/emergency_tools/img/${detail.photo_url}', 'Inspection Photo - ${detail.item_name}')"
+                                 alt="Inspection Photo">
+                        </div>
+                    `;
+                }
+
+                // Add attachments if available
+                if (detail.attachments && detail.attachments.length > 0) {
+                    content += `
+                        <div class="mb-3">
+                            <h6 class="text-muted mb-2"><i class="fas fa-paperclip me-1"></i>Additional Photos (${detail.attachments.length}):</h6>
+                            <div class="d-flex flex-wrap gap-2">
+                    `;
+
+                    detail.attachments.forEach((attachment, attachIndex) => {
+                        content += `
+                            <div class="position-relative">
+                                <img src="https://prisma.umrmaulana.my.id/assets/emergency_tools/img/${attachment.file_path}" 
+                                     class="img-thumbnail inspection-image-thumbnail" 
+                                     style="width: 100px; height: 100px; object-fit: cover; cursor: pointer;"
+                                     onclick="showImageModal('https://prisma.umrmaulana.my.id/assets/emergency_tools/img/${attachment.file_path}', '${attachment.file_name}')"
+                                     alt="${attachment.file_name}">
+                                <small class="position-absolute bottom-0 start-0 bg-dark text-white px-1" 
+                                       style="font-size: 0.7em; border-radius: 0 3px 0 0;">${attachIndex + 1}</small>
+                            </div>
+                        `;
+                    });
+
+                    content += `
+                            </div>
+                        </div>
+                    `;
+                }
+
+                content += `
+                                    </div>
+                                </div>
+                            </div>
+                        </div>
+                    </div>
+                `;
+            });
+
+            content += `
+                    </div>
+                </div>
+            `;
+        }
 
         document.getElementById('inspectionDetailContent').innerHTML = content;
 
@@ -1379,5 +1611,15 @@
                 showConfirmButton: false
             });
         }
+    }
+
+    // Show image in modal
+    function showImageModal(imageUrl, title) {
+        document.getElementById('imagePreviewImg').src = imageUrl;
+        document.getElementById('imagePreviewTitle').textContent = title || 'Image Preview';
+        document.getElementById('imageDownloadBtn').href = imageUrl;
+
+        const modal = new bootstrap.Modal(document.getElementById('imagePreviewModal'));
+        modal.show();
     }
 </script>
