@@ -122,6 +122,58 @@ class Report extends CI_Controller
     }
 
     /**
+     * Bulk approve inspections
+     */
+    public function bulk_approve()
+    {
+        header('Content-Type: application/json');
+
+        $inspection_ids = $this->input->post('inspection_ids');
+        $notes = $this->input->post('notes') ?: 'Bulk approved';
+
+        // Validate input
+        if (!is_array($inspection_ids) || empty($inspection_ids)) {
+            echo json_encode([
+                'success' => false,
+                'message' => 'No inspections selected for approval'
+            ]);
+            return;
+        }
+
+        $successful = 0;
+        $failed = 0;
+        $failed_items = [];
+
+        foreach ($inspection_ids as $inspection_id) {
+            // Use the correct column name 'id' instead of 'inspection_id'
+            $result = $this->Inspection_model->update_approval(
+                $inspection_id,
+                'approved',
+                $this->session->userdata('user_id'),
+                $notes
+            );
+
+            if ($result) {
+                $successful++;
+            } else {
+                $failed++;
+                $failed_items[] = $inspection_id;
+            }
+        }
+
+        echo json_encode([
+            'success' => true,
+            'message' => "Bulk approval completed: {$successful} successful, {$failed} failed",
+            'data' => [
+                'successful' => $successful,
+                'failed' => $failed,
+                'failed_items' => $failed_items,
+                'total' => count($inspection_ids)
+            ]
+        ]);
+    }
+
+    /**
      * API endpoints
      */
     public function api($action = null, $id = null)

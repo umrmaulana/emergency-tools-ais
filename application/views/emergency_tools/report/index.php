@@ -932,22 +932,200 @@
                 confirmButtonColor: '#28a745',
                 cancelButtonColor: '#d33',
                 confirmButtonText: 'Ya, Approve!',
-                cancelButtonText: 'Batal'
+                cancelButtonText: 'Batal',
+                input: 'textarea',
+                inputPlaceholder: 'Catatan approval (optional)...',
+                inputAttributes: {
+                    'aria-label': 'Catatan approval'
+                }
             }).then((result) => {
                 if (result.isConfirmed) {
-                    console.log('Bulk approve:', selected);
-                    Swal.fire({
-                        icon: 'info',
-                        title: 'Dalam pengembangan',
-                        text: 'Fitur bulk approve sedang dalam pengembangan'
-                    });
+                    const notes = result.value || '';
+                    processBulkApproval(selected, notes);
                 }
             });
         } else {
+            const notes = prompt('Catatan approval (optional):') || '';
             if (confirm(`Approve ${selected.length} inspection yang dipilih?`)) {
-                console.log('Bulk approve:', selected);
-                alert('Fitur bulk approve sedang dalam pengembangan');
+                processBulkApproval(selected, notes);
             }
+        }
+    }
+
+    // Process bulk approval
+    function processBulkApproval(inspectionIds, notes) {
+        // Show loading state
+        if (typeof Swal !== 'undefined') {
+            Swal.fire({
+                title: 'Processing...',
+                text: `Sedang memproses ${inspectionIds.length} inspection...`,
+                allowOutsideClick: false,
+                allowEscapeKey: false,
+                showConfirmButton: false,
+                didOpen: () => {
+                    Swal.showLoading();
+                }
+            });
+        }
+
+        // Process each inspection one by one
+        let processed = 0;
+        let successful = 0;
+        let failed = [];
+
+        const processNext = (index) => {
+            if (index >= inspectionIds.length) {
+                // All done, show results
+                showBulkApprovalResults(successful, failed.length, failed);
+                return;
+            }
+
+            const inspectionId = inspectionIds[index];
+            const url = `<?= base_url('emergency_tools/report/approve/') ?>${inspectionId}`;
+            const formData = new FormData();
+            formData.append('notes', notes);
+
+            fetch(url, {
+                method: 'POST',
+                body: formData,
+                headers: {
+                    'X-Requested-With': 'XMLHttpRequest'
+                }
+            })
+                .then(response => response.json())
+                .then(data => {
+                    processed++;
+
+                    if (data.success) {
+                        successful++;
+                        // Update UI for successful approval
+                        updateInspectionRowStatus(inspectionId, 'approved');
+                    } else {
+                        failed.push({
+                            id: inspectionId,
+                            error: data.message || 'Unknown error'
+                        });
+                    }
+
+                    // Update progress if using SweetAlert
+                    if (typeof Swal !== 'undefined') {
+                        Swal.update({
+                            text: `Memproses... ${processed}/${inspectionIds.length}`
+                        });
+                    }
+
+                    // Process next
+                    setTimeout(() => processNext(index + 1), 200); // Small delay to prevent overwhelming server
+                })
+                .catch(error => {
+                    processed++;
+                    console.error('Error approving inspection:', inspectionId, error);
+                    failed.push({
+                        id: inspectionId,
+                        error: 'Network error: ' + error.message
+                    });
+
+                    // Update progress if using SweetAlert
+                    if (typeof Swal !== 'undefined') {
+                        Swal.update({
+                            text: `Memproses... ${processed}/${inspectionIds.length}`
+                        });
+                    }
+
+                    // Process next
+                    setTimeout(() => processNext(index + 1), 200);
+                });
+        };
+
+        // Start processing
+        processNext(0);
+    }
+
+    // Show bulk approval results
+    function showBulkApprovalResults(successful, failedCount, failedItems) {
+        // Clear all checkboxes
+        document.querySelectorAll('.inspection-checkbox').forEach(cb => cb.checked = false);
+        document.getElementById('selectAll').checked = false;
+
+        if (typeof Swal !== 'undefined') {
+            if (failedCount === 0) {
+                // All successful
+                Swal.fire({
+                    icon: 'success',
+                    title: 'Berhasil!',
+                    text: `${successful} inspection berhasil di-approve!`,
+                    timer: 3000,
+                    showConfirmButton: false
+                }).then(() => {
+                    window.location.reload();
+                });
+            } else if (successful === 0) {
+                // All failed
+                Swal.fire({
+                    icon: 'error',
+                    title: 'Gagal!',
+                    text: `Gagal approve ${failedCount} inspection. Silakan coba lagi.`,
+                    confirmButtonText: 'OK'
+                });
+            } else {
+                // Mixed results
+                let failedDetails = failedItems.map(item => `- ID ${item.id}: ${item.error}`).join('\n');
+                Swal.fire({
+                    icon: 'warning',
+                    title: 'Sebagian Berhasil',
+                    html: `
+                        <div class="text-left">
+                            <p><strong>Berhasil:</strong> ${successful} inspection</p>
+                            <p><strong>Gagal:</strong> ${failedCount} inspection</p>
+                            <div class="mt-3">
+                                <small><strong>Detail kegagalan:</strong></small>
+                                <div class="text-left" style="font-size: 0.8em; max-height: 200px; overflow-y: auto;">
+                                    ${failedItems.map(item => `<div>• ID ${item.id}: ${item.error}</div>`).join('')}
+                                </div>
+                            </div>
+                        </div>
+                    `,
+                    confirmButtonText: 'OK'
+                }).then(() => {
+                    window.location.reload();
+                });
+            }
+        } else {
+            // Fallback for browsers without SweetAlert
+            if (failedCount === 0) {
+                alert(`${successful} inspection berhasil di-approve!`);
+            } else {
+                alert(`Berhasil: ${successful}, Gagal: ${failedCount} inspection`);
+            }
+            window.location.reload();
+        }
+    }
+
+    // Update inspection row status in the table
+    function updateInspectionRowStatus(inspectionId, newStatus) {
+        const row = document.querySelector(`tr[data-inspection-id="${inspectionId}"]`);
+        if (row) {
+            const statusCell = row.querySelector('td:nth-child(5)'); // Status column
+            if (statusCell) {
+                const badge = statusCell.querySelector('.badge');
+                if (badge) {
+                    badge.className = 'badge bg-success';
+                    badge.textContent = 'Approved';
+                }
+            }
+
+            // Hide action buttons for approved items
+            const actionCell = row.querySelector('td:nth-child(6)'); // Action column  
+            if (actionCell) {
+                const approveBtn = actionCell.querySelector('.btn-outline-success');
+                const rejectBtn = actionCell.querySelector('.btn-outline-danger');
+                if (approveBtn) approveBtn.style.display = 'none';
+                if (rejectBtn) rejectBtn.style.display = 'none';
+            }
+
+            // Uncheck the checkbox
+            const checkbox = row.querySelector('.inspection-checkbox');
+            if (checkbox) checkbox.checked = false;
         }
     }
 
