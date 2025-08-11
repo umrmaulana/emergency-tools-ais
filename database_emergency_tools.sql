@@ -3,7 +3,7 @@
 -- https://www.phpmyadmin.net/
 --
 -- Host: localhost:3306
--- Generation Time: Aug 07, 2025 at 06:57 AM
+-- Generation Time: Aug 11, 2025 at 04:11 AM
 -- Server version: 8.0.30
 -- PHP Version: 7.4.16
 
@@ -18,7 +18,7 @@ SET time_zone = "+00:00";
 /*!40101 SET NAMES utf8mb4 */;
 
 --
--- Database: `emergency_tool`
+-- Database: `msu`
 --
 
 -- --------------------------------------------------------
@@ -36,7 +36,7 @@ CREATE TABLE `tm_checksheet_templates` (
   `standar_picture_url` varchar(255) DEFAULT NULL,
   `created_at` timestamp NULL DEFAULT CURRENT_TIMESTAMP,
   `update_at` timestamp NULL DEFAULT CURRENT_TIMESTAMP ON UPDATE CURRENT_TIMESTAMP
-) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4 COLLATE=utf8mb4_0900_ai_ci;
+) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4 COLLATE=utf8mb4_general_ci;
 
 --
 -- Dumping data for table `tm_checksheet_templates`
@@ -45,7 +45,6 @@ CREATE TABLE `tm_checksheet_templates` (
 INSERT INTO `tm_checksheet_templates` (`id`, `equipment_type_id`, `order_number`, `item_name`, `standar_condition`, `standar_picture_url`, `created_at`, `update_at`) VALUES
 (14, 10, 1, 'Pin & Segel', 'Tepasang & segel tidak putus', 'standard_1754538191_7429.jpg', '2025-08-06 20:23:21', '2025-08-06 20:43:11'),
 (15, 11, 1, 'Pin & Segel', 'Terterter', 'standard_1754538198_8830.jpg', '2025-08-06 20:30:35', '2025-08-06 20:43:18'),
-(16, 12, 1, 'Pin & Segel', 'ser', 'standard_1754538337_9278.jpg', '2025-08-06 20:45:37', '2025-08-07 03:45:37'),
 (17, 10, 2, 'Label APAR', 'Tertempel, dapat dibaca dan tidak rusak', 'standard_1754539013_5656.jpg', '2025-08-06 20:56:53', '2025-08-07 03:56:53'),
 (18, 19, 1, 'NOZZLE', 'TDK PENYOK', 'standard_1754540890_7164.png', '2025-08-06 21:28:10', '2025-08-07 04:28:10');
 
@@ -65,16 +64,17 @@ CREATE TABLE `tm_equipments` (
   `status` enum('active','inactive','maintenance') DEFAULT 'active',
   `created_at` timestamp NULL DEFAULT CURRENT_TIMESTAMP,
   `update_at` timestamp NULL DEFAULT CURRENT_TIMESTAMP ON UPDATE CURRENT_TIMESTAMP
-) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4 COLLATE=utf8mb4_0900_ai_ci;
+) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4 COLLATE=utf8mb4_general_ci;
 
 --
 -- Dumping data for table `tm_equipments`
 --
 
 INSERT INTO `tm_equipments` (`id`, `equipment_code`, `location_id`, `equipment_type_id`, `qrcode`, `last_check_date`, `status`, `created_at`, `update_at`) VALUES
-(11, 'TEST-003', 14, 10, 'assets/emergency_tools/img/qrcode/qr_test_003_1754548121.png', NULL, 'maintenance', '2025-08-07 06:28:43', '2025-08-06 23:46:21'),
-(12, 'AP-001', 14, 10, 'assets/emergency_tools/img/qrcode/qr_ap_001_1754548280.png', NULL, 'active', '2025-08-07 06:31:21', '2025-08-06 23:46:16'),
-(13, 'AP-002', 21, 19, 'assets/emergency_tools/img/qrcode/qr_ap_002_1754548573.png', NULL, 'active', '2025-08-07 06:36:14', '2025-08-07 06:36:14');
+(12, 'AP-002', 15, 10, 'assets/emergency_tools/img/qrcode/qr_ap_001_1754548280.png', '2025-08-08 02:31:16', 'active', '2025-08-07 06:31:21', '2025-08-10 20:09:19'),
+(13, 'HYD-001', 23, 19, 'assets/emergency_tools/img/qrcode/qr_ap_002_1754548573.png', '2025-08-07 01:20:30', 'active', '2025-08-07 06:36:14', '2025-08-10 20:08:31'),
+(15, 'AP-001', 27, 10, 'assets/emergency_tools/img/qrcode/qr_ap_003_1754881465.png', '2025-08-10 20:49:29', 'active', '2025-08-11 03:04:26', '2025-08-10 20:49:29'),
+(16, 'TANDU-001', 29, 23, 'assets/emergency_tools/img/qrcode/qr_tandu_001_1754882830.png', NULL, 'active', '2025-08-11 03:27:11', '2025-08-11 03:27:11');
 
 -- --------------------------------------------------------
 
@@ -92,7 +92,7 @@ CREATE TABLE `tm_locations` (
   `area_y` decimal(10,6) DEFAULT NULL,
   `created_at` timestamp NULL DEFAULT CURRENT_TIMESTAMP,
   `updated_at` timestamp NULL DEFAULT CURRENT_TIMESTAMP ON UPDATE CURRENT_TIMESTAMP
-) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4 COLLATE=utf8mb4_0900_ai_ci;
+) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4 COLLATE=utf8mb4_general_ci;
 
 --
 -- Dumping data for table `tm_locations`
@@ -100,17 +100,11 @@ CREATE TABLE `tm_locations` (
 
 INSERT INTO `tm_locations` (`id`, `location_code`, `location_name`, `desc`, `area_code`, `area_x`, `area_y`, `created_at`, `updated_at`) VALUES
 (14, 'OFFICE-01', 'Plant Office', 'Area Office', 'A2', '176.200000', '575.850000', '2025-08-06 19:47:54', '2025-08-07 02:47:54'),
-(15, 'OFFICE-02', 'Plant Office', 'Area Office', 'A2', '114.550000', '606.940000', '2025-08-06 19:51:36', '2025-08-07 02:51:36'),
-(16, 'as', 'as', '', 'A7', '634.400000', '579.710000', '2025-08-06 20:37:51', '2025-08-07 03:37:51'),
-(17, 'asad', 'asdas', '', 'A8', '769.850000', '36.060000', '2025-08-06 20:38:01', '2025-08-07 03:38:01'),
-(18, 'asd', 'afad', '', 'A4', '369.850000', '40.060000', '2025-08-06 20:38:08', '2025-08-07 03:38:08'),
-(19, 'asfas', 'asdasd', '', 'C6', '581.850000', '282.130000', '2025-08-06 20:38:17', '2025-08-07 03:38:17'),
-(20, 'asdasd', 'asasf', '', 'B4', '321.850000', '206.110000', '2025-08-06 20:38:26', '2025-08-07 03:38:26'),
-(21, 'avadv', 'vzxvv', '', 'C3', '259.850000', '284.130000', '2025-08-06 20:38:42', '2025-08-07 03:38:42'),
-(22, 'afa', 'zxvzc', '', 'C8', '763.850000', '272.130000', '2025-08-06 20:38:50', '2025-08-07 03:38:50'),
-(23, 'aegd', 'zvzc', '', 'D5', '483.850000', '934.330000', '2025-08-06 20:38:58', '2025-08-07 03:38:58'),
-(24, 'asfas', 'xczxc', '', 'D4', '317.850000', '942.330000', '2025-08-06 20:39:07', '2025-08-07 03:39:07'),
-(25, 'TST-001', 'Test Location', NULL, NULL, NULL, NULL, '2025-08-07 06:23:49', '2025-08-07 06:23:49');
+(15, 'OFFICE-02', 'ADM Office', 'Area Office', 'A2', '114.550000', '606.940000', '2025-08-06 19:51:36', '2025-08-07 19:23:09'),
+(23, 'GATE-01', 'Pintu Keluar', '', 'D5', '483.850000', '934.330000', '2025-08-06 20:38:58', '2025-08-07 19:25:07'),
+(27, 'PLANT-B2', 'Tiang B2', '', 'B4', '333.200000', '189.940000', '2025-08-10 20:03:53', '2025-08-11 03:03:53'),
+(28, 'PPIC-001', 'Delivery', '', 'C5', '439.270000', '800.230000', '2025-08-10 20:12:10', '2025-08-11 03:12:10'),
+(29, 'PLANT-B5', 'Jalan', '', 'B5', '449.100000', '128.220000', '2025-08-10 20:26:41', '2025-08-11 03:26:41');
 
 -- --------------------------------------------------------
 
@@ -127,20 +121,19 @@ CREATE TABLE `tm_master_equipment_types` (
   `is_active` tinyint(1) DEFAULT '1',
   `created_at` timestamp NULL DEFAULT CURRENT_TIMESTAMP,
   `updated_at` timestamp NULL DEFAULT CURRENT_TIMESTAMP ON UPDATE CURRENT_TIMESTAMP
-) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4 COLLATE=utf8mb4_0900_ai_ci;
+) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4 COLLATE=utf8mb4_general_ci;
 
 --
 -- Dumping data for table `tm_master_equipment_types`
 --
 
 INSERT INTO `tm_master_equipment_types` (`id`, `equipment_name`, `equipment_type`, `desc`, `icon_url`, `is_active`, `created_at`, `updated_at`) VALUES
-(10, 'APAR', 'AF 11', 'Alat Pemadam Api Ringan', 'equipment_1754539461_9094.png', 1, '2025-08-06 02:01:22', '2025-08-06 21:04:21'),
-(11, 'APAR', 'CO2', 'Alat Pemadam Api Ringan', 'equipment_1754539471_3813.png', 1, '2025-08-06 02:01:51', '2025-08-06 21:04:31'),
-(12, 'APAR', 'POWDER', 'Alat Pemadam Api Ringan', 'equipment_1754539476_2139.png', 1, '2025-08-06 02:02:12', '2025-08-06 21:04:36'),
-(15, 'APAR', 'FOAM', 'Alat Pemadam Api Ringan', 'equipment_1754539483_8029.png', 1, '2025-08-06 02:03:21', '2025-08-06 21:04:43'),
-(19, 'HYDRANT', 'BOX', 'Alat Pemadam Api', 'equipment_1754539440_5103.png', 1, '2025-08-06 21:04:00', '2025-08-06 21:04:56'),
-(20, 'HYDRANT', 'PILLAR', 'Alat Pemadam Api', 'equipment_1754539518_1990.png', 1, '2025-08-06 21:05:18', '2025-08-06 21:27:32'),
-(21, 'Test Equipment', 'Test Type', NULL, NULL, 1, '2025-08-07 06:23:54', '2025-08-07 06:23:54');
+(10, 'APAR', 'AF 11', 'Alat Pemadam Api Ringan', 'equipment_1754551764_7466.png', 1, '2025-08-06 02:01:22', '2025-08-07 00:29:24'),
+(11, 'APAR', 'CO2', 'Alat Pemadam Api Ringan', 'equipment_1754551773_7652.png', 1, '2025-08-06 02:01:51', '2025-08-07 00:29:33'),
+(15, 'APAR', 'FOAM', 'Alat Pemadam Api Ringan', 'equipment_1754551784_2735.png', 1, '2025-08-06 02:03:21', '2025-08-07 00:29:44'),
+(19, 'HYDRANT', 'BOX', 'Alat Pemadam Api', 'equipment_1754551799_4916.png', 1, '2025-08-06 21:04:00', '2025-08-07 00:29:59'),
+(20, 'HYDRANT', 'PILLAR', 'Alat Pemadam Api', 'equipment_1754551698_7549.png', 1, '2025-08-06 21:05:18', '2025-08-07 00:28:18'),
+(23, 'TANDU', 'TANDU', '', 'equipment_1754882651_2223.jpg', 1, '2025-08-10 20:24:11', '2025-08-11 03:24:11');
 
 -- --------------------------------------------------------
 
@@ -156,7 +149,16 @@ CREATE TABLE `tr_attachments` (
   `file_type` varchar(20) NOT NULL,
   `file_size` int NOT NULL,
   `created_at` timestamp NULL DEFAULT CURRENT_TIMESTAMP
-) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4 COLLATE=utf8mb4_0900_ai_ci;
+) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4 COLLATE=utf8mb4_general_ci;
+
+--
+-- Dumping data for table `tr_attachments`
+--
+
+INSERT INTO `tr_attachments` (`id`, `inspection_detail_id`, `file_path`, `file_name`, `file_type`, `file_size`, `created_at`) VALUES
+(1, 19, 'attachment_001.jpg', 'Pin Segel Detail 1.jpg', 'image/jpeg', 1024, '2025-08-11 03:58:18'),
+(2, 19, 'attachment_002.jpg', 'Pin Segel Detail 2.jpg', 'image/jpeg', 1024, '2025-08-11 03:58:18'),
+(3, 20, 'attachment_003.jpg', 'Label APAR Close-up.jpg', 'image/jpeg', 1024, '2025-08-11 03:58:18');
 
 -- --------------------------------------------------------
 
@@ -174,7 +176,15 @@ CREATE TABLE `tr_inspections` (
   `approved_by` int DEFAULT NULL,
   `created_at` timestamp NULL DEFAULT CURRENT_TIMESTAMP,
   `updated_at` timestamp NULL DEFAULT CURRENT_TIMESTAMP ON UPDATE CURRENT_TIMESTAMP
-) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4 COLLATE=utf8mb4_0900_ai_ci;
+) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4 COLLATE=utf8mb4_general_ci;
+
+--
+-- Dumping data for table `tr_inspections`
+--
+
+INSERT INTO `tr_inspections` (`id`, `user_id`, `equipment_id`, `inspection_date`, `notes`, `approval_status`, `approved_by`, `created_at`, `updated_at`) VALUES
+(22, 3, 15, '2025-08-10 20:49:29', '', 'pending', NULL, '2025-08-11 03:49:29', '2025-08-11 03:49:29'),
+(23, 1, 12, '2025-08-11 03:56:31', 'Test inspection dengan detail dan foto', 'pending', NULL, '2025-08-11 03:56:31', '2025-08-11 03:56:31');
 
 -- --------------------------------------------------------
 
@@ -186,12 +196,21 @@ CREATE TABLE `tr_inspection_details` (
   `id` int NOT NULL,
   `inspection_id` int NOT NULL,
   `checksheet_item_id` int NOT NULL,
-  `actual_condition` varchar(255) NOT NULL,
   `photo_url` varchar(255) DEFAULT NULL,
   `note` text,
   `status` enum('ok','not_ok') NOT NULL,
   `created_at` timestamp NULL DEFAULT CURRENT_TIMESTAMP
-) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4 COLLATE=utf8mb4_0900_ai_ci;
+) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4 COLLATE=utf8mb4_general_ci;
+
+--
+-- Dumping data for table `tr_inspection_details`
+--
+
+INSERT INTO `tr_inspection_details` (`id`, `inspection_id`, `checksheet_item_id`, `photo_url`, `note`, `status`, `created_at`) VALUES
+(17, 22, 14, 'inspection/inspection_14_1754884169.png', '', 'ok', '2025-08-11 03:49:29'),
+(18, 22, 17, 'inspection/inspection_17_1754884169.png', '', 'ok', '2025-08-11 03:49:29'),
+(19, 23, 14, 'inspection_photo_001.jpg', 'Pin dan segel dalam kondisi baik - Kondisi normal', 'ok', '2025-08-11 03:57:58'),
+(20, 23, 17, 'inspection_photo_002.jpg', 'Label APAR masih tertempel dengan baik - Label dapat dibaca dengan jelas', 'ok', '2025-08-11 03:57:58');
 
 -- --------------------------------------------------------
 
@@ -208,15 +227,16 @@ CREATE TABLE `users` (
   `level` enum('spv','inspector') NOT NULL,
   `created_at` timestamp NULL DEFAULT CURRENT_TIMESTAMP,
   `update_at` timestamp NULL DEFAULT CURRENT_TIMESTAMP ON UPDATE CURRENT_TIMESTAMP
-) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4 COLLATE=utf8mb4_0900_ai_ci;
+) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4 COLLATE=utf8mb4_general_ci;
 
 --
 -- Dumping data for table `users`
 --
 
 INSERT INTO `users` (`id`, `npk`, `username`, `name`, `password`, `level`, `created_at`, `update_at`) VALUES
-(1, 'SPV001', 'supervisor', 'John Supervisor', 'admin123', 'spv', '2025-08-06 04:43:39', '2025-08-06 17:46:27'),
-(2, '71030', 'umrmaulana', 'Umar Maulana', 'Maulana1', 'spv', '2025-08-06 04:43:39', '2025-08-06 23:48:02');
+(1, 'SPV001', 'supervisor', 'John Supervisor', 'admin123', 'spv', '2025-08-06 04:43:39', '2025-08-07 00:11:05'),
+(2, '71030', 'umrmaulana', 'Umar Maulana', 'Maulana1', 'spv', '2025-08-06 04:43:39', '2025-08-10 18:51:10'),
+(3, '12051', 'inspector', 'Inspector 1', 'admin123', 'inspector', '2025-08-07 08:05:04', '2025-08-10 20:07:38');
 
 --
 -- Indexes for dumped tables
@@ -295,49 +315,49 @@ ALTER TABLE `users`
 -- AUTO_INCREMENT for table `tm_checksheet_templates`
 --
 ALTER TABLE `tm_checksheet_templates`
-  MODIFY `id` int NOT NULL AUTO_INCREMENT, AUTO_INCREMENT=19;
+  MODIFY `id` int NOT NULL AUTO_INCREMENT, AUTO_INCREMENT=20;
 
 --
 -- AUTO_INCREMENT for table `tm_equipments`
 --
 ALTER TABLE `tm_equipments`
-  MODIFY `id` int NOT NULL AUTO_INCREMENT, AUTO_INCREMENT=14;
+  MODIFY `id` int NOT NULL AUTO_INCREMENT, AUTO_INCREMENT=17;
 
 --
 -- AUTO_INCREMENT for table `tm_locations`
 --
 ALTER TABLE `tm_locations`
-  MODIFY `id` int NOT NULL AUTO_INCREMENT, AUTO_INCREMENT=26;
+  MODIFY `id` int NOT NULL AUTO_INCREMENT, AUTO_INCREMENT=30;
 
 --
 -- AUTO_INCREMENT for table `tm_master_equipment_types`
 --
 ALTER TABLE `tm_master_equipment_types`
-  MODIFY `id` int NOT NULL AUTO_INCREMENT, AUTO_INCREMENT=22;
+  MODIFY `id` int NOT NULL AUTO_INCREMENT, AUTO_INCREMENT=24;
 
 --
 -- AUTO_INCREMENT for table `tr_attachments`
 --
 ALTER TABLE `tr_attachments`
-  MODIFY `id` int NOT NULL AUTO_INCREMENT;
+  MODIFY `id` int NOT NULL AUTO_INCREMENT, AUTO_INCREMENT=4;
 
 --
 -- AUTO_INCREMENT for table `tr_inspections`
 --
 ALTER TABLE `tr_inspections`
-  MODIFY `id` int NOT NULL AUTO_INCREMENT;
+  MODIFY `id` int NOT NULL AUTO_INCREMENT, AUTO_INCREMENT=24;
 
 --
 -- AUTO_INCREMENT for table `tr_inspection_details`
 --
 ALTER TABLE `tr_inspection_details`
-  MODIFY `id` int NOT NULL AUTO_INCREMENT;
+  MODIFY `id` int NOT NULL AUTO_INCREMENT, AUTO_INCREMENT=21;
 
 --
 -- AUTO_INCREMENT for table `users`
 --
 ALTER TABLE `users`
-  MODIFY `id` int NOT NULL AUTO_INCREMENT, AUTO_INCREMENT=3;
+  MODIFY `id` int NOT NULL AUTO_INCREMENT, AUTO_INCREMENT=4;
 
 --
 -- Constraints for dumped tables

@@ -609,6 +609,143 @@
         border-color: #007bff;
         box-shadow: 0 2px 8px rgba(0, 123, 255, 0.1);
     }
+
+    /* Images container styling */
+    .images-container {
+        background-color: #f8f9fa;
+        padding: 1rem;
+        border-radius: 8px;
+        border: 1px solid #e9ecef;
+    }
+
+    .image-item {
+        text-align: center;
+    }
+
+    .image-item h6 {
+        font-size: 0.9rem;
+        margin-bottom: 0.75rem;
+    }
+
+    .attachment-thumbnail {
+        transition: transform 0.2s ease;
+    }
+
+    .attachment-thumbnail:hover {
+        transform: scale(1.05);
+    }
+
+    /* Improved responsive layout */
+    @media (max-width: 768px) {
+        .images-container {
+            margin-top: 1rem;
+        }
+
+        .inspection-detail-card .row>div {
+            margin-bottom: 1rem;
+        }
+    }
+
+    /* Custom Accordion Styling */
+    .accordion-item {
+        border: 1px solid #e0e6ed;
+        border-radius: 8px !important;
+        overflow: hidden;
+        box-shadow: 0 2px 4px rgba(0, 0, 0, 0.05);
+        transition: all 0.3s ease;
+    }
+
+    .accordion-item:hover {
+        box-shadow: 0 4px 8px rgba(0, 0, 0, 0.1);
+        transform: translateY(-1px);
+    }
+
+    .accordion-button {
+        background-color: #f8f9fa;
+        border: none;
+        padding: 1rem 1.25rem;
+        font-weight: 500;
+        color: #495057;
+        transition: all 0.3s ease;
+    }
+
+    .accordion-button:not(.collapsed) {
+        background-color: #e7f3ff;
+        color: #0066cc;
+        border-bottom: 1px solid #dee2e6;
+    }
+
+    .accordion-button:focus {
+        border-color: #80bdff;
+        box-shadow: 0 0 0 0.2rem rgba(0, 123, 255, 0.25);
+    }
+
+    .accordion-button::after {
+        background-image: url("data:image/svg+xml,%3csvg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 16 16' fill='%23212529'%3e%3cpath fill-rule='evenodd' d='M1.646 4.646a.5.5 0 0 1 .708 0L8 10.293l5.646-5.647a.5.5 0 0 1 .708.708l-6 6a.5.5 0 0 1-.708 0l-6-6a.5.5 0 0 1 0-.708z'/%3e%3c/svg%3e");
+        transition: transform 0.3s ease;
+    }
+
+    .accordion-button:not(.collapsed)::after {
+        transform: rotate(180deg);
+    }
+
+    .accordion-body {
+        padding: 1.25rem;
+        background-color: #ffffff;
+        border-top: 1px solid #dee2e6;
+    }
+
+    /* Custom badge styling in accordion */
+    .accordion-button .badge {
+        font-size: 0.75rem;
+        padding: 0.35em 0.65em;
+        border-radius: 0.375rem;
+    }
+
+    /* Animation for accordion collapse */
+    .accordion-collapse {
+        transition: all 0.3s ease;
+    }
+
+    /* Accordion item counter */
+    .accordion-button::before {
+        content: counter(accordion-counter);
+        counter-increment: accordion-counter;
+        background: #007bff;
+        color: white;
+        border-radius: 50%;
+        width: 22px;
+        height: 22px;
+        display: inline-flex;
+        align-items: center;
+        justify-content: center;
+        font-size: 0.7rem;
+        font-weight: bold;
+        margin-right: 0.75rem;
+        flex-shrink: 0;
+        order: -1;
+    }
+
+    .accordion-button:not(.collapsed)::before {
+        background: #0066cc;
+    }
+
+    #inspectionAccordion {
+        counter-reset: accordion-counter;
+    }
+
+    /* Responsive accordion controls */
+    @media (max-width: 576px) {
+        .btn-group .btn {
+            font-size: 0.8rem;
+            padding: 0.375rem 0.75rem;
+        }
+
+        .accordion-button {
+            padding: 0.75rem 1rem;
+            font-size: 0.9rem;
+        }
+    }
 </style>
 
 <script>
@@ -1352,8 +1489,21 @@
         if (inspection.details && inspection.details.length > 0) {
             content += `
                 <div class="mt-4">
-                    <h6 class="text-primary mb-3">Inspection Details</h6>
-                    <div class="row">
+                    <div class="d-flex justify-content-between align-items-center mb-3">
+                        <h6 class="text-primary mb-0">
+                            Inspection Details 
+                            <span class="badge bg-secondary ms-2">${inspection.details.length} items</span>
+                        </h6>
+                        <div class="btn-group" role="group">
+                            <button type="button" class="btn btn-outline-primary btn-sm" onclick="expandAllAccordion()" title="Expand all items">
+                                <i class="fas fa-expand-alt me-1"></i>Expand All
+                            </button>
+                            <button type="button" class="btn btn-outline-secondary btn-sm" onclick="collapseAllAccordion()" title="Collapse all items">
+                                <i class="fas fa-compress-alt me-1"></i>Collapse All
+                            </button>
+                        </div>
+                    </div>
+                    <div class="accordion" id="inspectionAccordion">
             `;
 
             inspection.details.forEach((detail, index) => {
@@ -1361,85 +1511,100 @@
                     '<span class="badge bg-success">OK</span>' :
                     '<span class="badge bg-danger">NOT OK</span>';
 
+                const accordionId = `accordionItem${index}`;
+                const collapseId = `collapse${index}`;
+
                 content += `
-                    <div class="col-md-12 mb-4">
-                        <div class="card inspection-detail-card">
-                            <div class="card-header d-flex justify-content-between align-items-center">
-                                <h6 class="mb-0">${detail.item_name || 'Inspection Item ' + (index + 1)}</h6>
-                                ${statusBadge}
-                            </div>
-                            <div class="card-body">
-                                <div class="row">
-                                    <div class="col-md-6">
-                                        <table class="table table-sm table-borderless">
-                                            <tr><th>Standard Condition:</th><td>${detail.standar_condition || 'N/A'}</td></tr>
-                                            <tr><th>Actual Condition:</th><td>${detail.actual_condition || detail.note || 'N/A'}</td></tr>
-                                            ${detail.note && detail.note !== detail.actual_condition ? `<tr><th>Additional Note:</th><td>${detail.note}</td></tr>` : ''}
-                                        </table>
+                        <div class="accordion-item mb-2">
+                            <h2 class="accordion-header" id="heading${index}">
+                                <button class="accordion-button collapsed d-flex justify-content-between align-items-center" type="button" 
+                                        data-bs-toggle="collapse" data-bs-target="#${collapseId}" 
+                                        aria-expanded="false" aria-controls="${collapseId}">
+                                    <div class="d-flex align-items-center flex-grow-1">
+                                        <i class="fas fa-clipboard-check me-2"></i>
+                                        <span>${detail.item_name || 'Inspection Item ' + (index + 1)}</span>
                                     </div>
-                                    <div class="col-md-6">
+                                    <div class="me-3">
+                                        ${statusBadge}
+                                    </div>
+                                </button>
+                            </h2>
+                            <div id="${collapseId}" class="accordion-collapse collapse" aria-labelledby="heading${index}" 
+                                 data-bs-parent="#inspectionAccordion">
+                                <div class="accordion-body">
+                                    <div class="row">
+                                        <div class="col-md-6">
+                                            <table class="table table-sm table-borderless">
+                                                <tr><th>Standard Condition:</th><td>${detail.standar_condition || 'N/A'}</td></tr>
+                                                ${(detail.actual_condition && detail.actual_condition !== 'N/A') || (detail.note && detail.note !== 'N/A') ? `<tr><th>Actual Condition:</th><td>${detail.actual_condition || detail.note}</td></tr>` : ''}
+                                                ${detail.note && detail.note !== detail.actual_condition && detail.note !== 'N/A' ? `<tr><th>Additional Note:</th><td>${detail.note}</td></tr>` : ''}
+                                            </table>
+                                        </div>
+                                        <div class="col-md-6">
+                                            <div class="images-container">
                 `;
 
                 // Add standard picture if available
                 if (detail.standar_picture_url) {
                     content += `
-                        <div class="mb-3">
-                            <h6 class="text-muted mb-2"><i class="fas fa-image me-1"></i>Standard Picture:</h6>
-                            <img src="<?= base_url('assets/emergency_tools/img/standars/') ?>${detail.standar_picture_url}" 
-                                 class="img-thumbnail inspection-image-thumbnail" style="max-width: 150px; max-height: 150px; cursor: pointer;"
-                                 onclick="showImageModal('<?= base_url('assets/emergency_tools/img/') ?>${detail.standar_picture_url}', 'Standard Picture - ${detail.item_name}')"
-                                 alt="Standard Picture">
-                        </div>
+                                                <div class="image-item mb-3">
+                                                    <h6 class="text-muted mb-2"><i class="fas fa-image me-1"></i>Standard Picture:</h6>
+                                                    <img src="<?= base_url('assets/emergency_tools/img/standars/') ?>${detail.standar_picture_url}" 
+                                                         class="img-thumbnail inspection-image-thumbnail" style="max-width: 150px; max-height: 150px; cursor: pointer;"
+                                                         onclick="showImageModal('<?= base_url('assets/emergency_tools/img/standars/') ?>${detail.standar_picture_url}', 'Standard Picture - ${detail.item_name}')"
+                                                         alt="Standard Picture">
+                                                </div>
                     `;
                 }
 
                 // Add inspection photo if available
                 if (detail.photo_url) {
                     content += `
-                        <div class="mb-3">
-                            <h6 class="text-muted mb-2"><i class="fas fa-camera me-1"></i>Inspection Photo:</h6>
-                            <img src="https://prisma.umrmaulana.my.id/assets/emergency_tools/img/${detail.photo_url}" 
-                                 class="img-thumbnail inspection-image-thumbnail" style="max-width: 150px; max-height: 150px; cursor: pointer;"
-                                 onclick="showImageModal('https://prisma.umrmaulana.my.id/assets/emergency_tools/img/${detail.photo_url}', 'Inspection Photo - ${detail.item_name}')"
-                                 alt="Inspection Photo">
-                        </div>
+                                                <div class="image-item mb-3">
+                                                    <h6 class="text-muted mb-2"><i class="fas fa-camera me-1"></i>Inspection Photo:</h6>
+                                                    <img src="https://prisma.umrmaulana.my.id/assets/emergency_tools/img/${detail.photo_url}" 
+                                                         class="img-thumbnail inspection-image-thumbnail" style="max-width: 150px; max-height: 150px; cursor: pointer;"
+                                                         onclick="showImageModal('https://prisma.umrmaulana.my.id/assets/emergency_tools/img/${detail.photo_url}', 'Inspection Photo - ${detail.item_name}')"
+                                                         alt="Inspection Photo">
+                                                </div>
                     `;
                 }
 
                 // Add attachments if available
                 if (detail.attachments && detail.attachments.length > 0) {
                     content += `
-                        <div class="mb-3">
-                            <h6 class="text-muted mb-2"><i class="fas fa-paperclip me-1"></i>Additional Photos (${detail.attachments.length}):</h6>
-                            <div class="d-flex flex-wrap gap-2">
+                                                <div class="image-item mb-3">
+                                                    <h6 class="text-muted mb-2"><i class="fas fa-paperclip me-1"></i>Additional Photos (${detail.attachments.length}):</h6>
+                                                    <div class="d-flex flex-wrap gap-2">
                     `;
 
                     detail.attachments.forEach((attachment, attachIndex) => {
                         content += `
-                            <div class="position-relative">
-                                <img src="https://prisma.umrmaulana.my.id/assets/emergency_tools/img/${attachment.file_path}" 
-                                     class="img-thumbnail inspection-image-thumbnail" 
-                                     style="width: 100px; height: 100px; object-fit: cover; cursor: pointer;"
-                                     onclick="showImageModal('https://prisma.umrmaulana.my.id/assets/emergency_tools/img/${attachment.file_path}', '${attachment.file_name}')"
-                                     alt="${attachment.file_name}">
-                                <small class="position-absolute bottom-0 start-0 bg-dark text-white px-1" 
-                                       style="font-size: 0.7em; border-radius: 0 3px 0 0;">${attachIndex + 1}</small>
-                            </div>
+                                                        <div class="position-relative attachment-thumbnail">
+                                                            <img src="https://prisma.umrmaulana.my.id/assets/emergency_tools/img/${attachment.file_path}" 
+                                                                 class="img-thumbnail inspection-image-thumbnail" 
+                                                                 style="width: 100px; height: 100px; object-fit: cover; cursor: pointer;"
+                                                                 onclick="showImageModal('https://prisma.umrmaulana.my.id/assets/emergency_tools/img/${attachment.file_path}', '${attachment.file_name}')"
+                                                                 alt="${attachment.file_name}">
+                                                            <small class="position-absolute bottom-0 start-0 bg-dark text-white px-1" 
+                                                                   style="font-size: 0.7em; border-radius: 0 3px 0 0;">${attachIndex + 1}</small>
+                                                        </div>
                         `;
                     });
 
                     content += `
-                            </div>
-                        </div>
+                                                    </div>
+                                                </div>
                     `;
                 }
 
                 content += `
+                                            </div>
+                                        </div>
                                     </div>
                                 </div>
                             </div>
                         </div>
-                    </div>
                 `;
             });
 
@@ -1612,6 +1777,74 @@
             });
         }
     }
+
+    // Accordion control functions
+    function expandAllAccordion() {
+        const accordionItems = document.querySelectorAll('#inspectionAccordion .accordion-collapse');
+        const accordionButtons = document.querySelectorAll('#inspectionAccordion .accordion-button');
+
+        accordionItems.forEach((item, index) => {
+            setTimeout(() => {
+                if (!item.classList.contains('show')) {
+                    const bsCollapse = new bootstrap.Collapse(item, { show: true });
+                }
+            }, index * 100); // Stagger the animation
+        });
+
+        accordionButtons.forEach(button => {
+            button.classList.remove('collapsed');
+            button.setAttribute('aria-expanded', 'true');
+        });
+    }
+
+    function collapseAllAccordion() {
+        const accordionItems = document.querySelectorAll('#inspectionAccordion .accordion-collapse');
+        const accordionButtons = document.querySelectorAll('#inspectionAccordion .accordion-button');
+
+        accordionItems.forEach((item, index) => {
+            setTimeout(() => {
+                if (item.classList.contains('show')) {
+                    const bsCollapse = new bootstrap.Collapse(item, { hide: true });
+                }
+            }, index * 50); // Faster collapse animation
+        });
+
+        accordionButtons.forEach(button => {
+            button.classList.add('collapsed');
+            button.setAttribute('aria-expanded', 'false');
+        });
+    }
+
+    // Add event listeners for accordion items (smooth scrolling when opened)
+    document.addEventListener('DOMContentLoaded', function () {
+        // This will be triggered when modal content is loaded
+        const observeAccordion = () => {
+            const accordionItems = document.querySelectorAll('#inspectionAccordion .accordion-collapse');
+            accordionItems.forEach(item => {
+                item.addEventListener('shown.bs.collapse', function () {
+                    // Smooth scroll to the opened item
+                    this.scrollIntoView({
+                        behavior: 'smooth',
+                        block: 'nearest',
+                        inline: 'nearest'
+                    });
+                });
+            });
+        };
+
+        // Observer for when modal content changes
+        const modalContent = document.getElementById('inspectionDetailContent');
+        if (modalContent) {
+            const observer = new MutationObserver(function (mutations) {
+                mutations.forEach(function (mutation) {
+                    if (mutation.type === 'childList' && mutation.addedNodes.length > 0) {
+                        setTimeout(observeAccordion, 100);
+                    }
+                });
+            });
+            observer.observe(modalContent, { childList: true, subtree: true });
+        }
+    });
 
     // Show image in modal
     function showImageModal(imageUrl, title) {
