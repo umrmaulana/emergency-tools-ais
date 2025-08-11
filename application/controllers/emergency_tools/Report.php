@@ -24,6 +24,9 @@ class Report extends CI_Controller
         $data['inspections'] = $this->Inspection_model->get_all_inspections(50); // Latest 50 inspections
         $data['pending_count'] = $this->Inspection_model->count_pending_approvals();
 
+        // Get equipment data for map markers
+        $data['equipments'] = $this->Equipment_model->get_equipment_with_location();
+
         $this->load->view('emergency_tools/templates/header', $data);
         $this->load->view('emergency_tools/templates/sidebar', $data);
         $this->load->view('emergency_tools/report/index', $data);

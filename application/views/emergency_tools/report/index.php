@@ -413,6 +413,16 @@
         border: none !important;
     }
 
+    .custom-equipment-marker-container {
+        background: none !important;
+        border: none !important;
+    }
+
+    .equipment-marker-container:hover .equipment-icon {
+        transform: scale(1.1);
+        box-shadow: 0 5px 15px rgba(0, 0, 0, 0.4);
+    }
+
     .custom-equipment-marker {
         width: 32px;
         height: 32px;
@@ -573,7 +583,7 @@
 
         var imageWidth = 1000;
         var imageHeight = 800;
-        var bounds = [[0, 0], [imageHeight, imageWidth]];
+        var bounds = L.latLngBounds([[0, 0], [imageHeight, imageWidth]]);
 
         console.log('Image dimensions:', imageWidth, 'x', imageHeight);
 
@@ -595,7 +605,7 @@
         }).addTo(map);
 
         map.fitBounds(bounds);
-        map.setMaxBounds(bounds.pad(0.1));
+        map.setMaxBounds(bounds);
         map.setView([imageHeight / 2, imageWidth / 2], map.getBoundsZoom(bounds));
 
         console.log('Adding equipment markers...');
@@ -607,99 +617,186 @@
 
     // Add equipment markers to map
     function addEquipmentMarkers() {
-        const sampleEquipment = [
-            // Manufacturing Zone
-            { code: 'AED-001', name: 'AED Unit Manufacturing', type: 'AED', status: 'good', x: 150, y: 100, inspector: 'John Supervisor', inspection_date: '<?= date('Y-m-d') ?>' },
-            { code: 'EXT-001', name: 'Fire Extinguisher Prod-1', type: 'extinguisher', status: 'good', x: 200, y: 80, inspector: 'John Supervisor' },
-            { code: 'EMG-001', name: 'Emergency Light Prod-1', type: 'emergency_light', status: 'needs_attention', x: 250, y: 120, inspector: 'John Supervisor' },
-            { code: 'SPK-001', name: 'Sprinkler System Prod-1', type: 'sprinkler', status: 'good', x: 300, y: 90, inspector: 'Safety Team' },
-
-            // Assembly Line
-            { code: 'AED-002', name: 'AED Unit Assembly', type: 'AED', status: 'good', x: 120, y: 200, inspector: 'John Supervisor' },
-            { code: 'EXT-002', name: 'Fire Extinguisher Assy-1', type: 'extinguisher', status: 'critical', x: 170, y: 180, inspector: 'Safety Team' },
-            { code: 'EXIT-001', name: 'Emergency Exit Main', type: 'emergency_exit', status: 'good', x: 80, y: 220, inspector: 'Facility Team' },
-            { code: 'ALM-001', name: 'Fire Alarm Assembly', type: 'fire_alarm', status: 'good', x: 220, y: 210, inspector: 'Safety Team' },
-
-            // Warehouse Area
-            { code: 'AED-003', name: 'AED Unit Warehouse', type: 'AED', status: 'good', x: 380, y: 150, inspector: 'Warehouse Team' },
-            { code: 'EXT-004', name: 'Fire Extinguisher WH-1', type: 'extinguisher', status: 'good', x: 420, y: 180, inspector: 'Warehouse Team' },
-            { code: 'EXIT-002', name: 'Emergency Exit Warehouse', type: 'emergency_exit', status: 'good', x: 450, y: 120, inspector: 'Facility Team' },
-            { code: 'SPK-002', name: 'Sprinkler System WH', type: 'sprinkler', status: 'needs_attention', x: 400, y: 200, inspector: 'Maintenance Team' },
-
-            // Office Area
-            { code: 'AED-004', name: 'AED Unit Office', type: 'AED', status: 'good', x: 200, y: 380, inspector: 'Admin Team' },
-            { code: 'EXT-005', name: 'Fire Extinguisher Office', type: 'extinguisher', status: 'good', x: 250, y: 400, inspector: 'Admin Team' },
-            { code: 'FIRST-002', name: 'First Aid Kit Office', type: 'first_aid', status: 'needs_attention', x: 150, y: 420, inspector: 'Medical Team' },
-            { code: 'EMG-003', name: 'Emergency Light Office', type: 'emergency_light', status: 'good', x: 300, y: 360, inspector: 'Facility Team' }
-        ];
+        // Get equipment data from PHP
+        const equipmentData = <?php echo json_encode($equipments ?? []); ?>;
+        console.log('Equipment data:', equipmentData);
 
         equipmentMarkers.forEach(marker => map.removeLayer(marker));
         equipmentMarkers = [];
 
-        sampleEquipment.forEach(equipment => {
-            let markerColor = '';
-            let markerIcon = '';
+        if (equipmentData && equipmentData.length > 0) {
+            equipmentData.forEach(equipment => {
+                console.log('Processing equipment:', equipment);
 
-            switch (equipment.status) {
-                case 'good':
-                    markerColor = '#28a745';
-                    markerIcon = 'check-circle';
-                    break;
-                case 'needs_attention':
-                    markerColor = '#ffc107';
-                    markerIcon = 'exclamation-triangle';
-                    break;
-                case 'critical':
-                    markerColor = '#dc3545';
-                    markerIcon = 'times-circle';
-                    break;
-                default:
-                    markerColor = '#6c757d';
-                    markerIcon = 'question-circle';
-            }
+                if (!equipment.area_x || !equipment.area_y) {
+                    console.log('Skipping equipment without coordinates:', equipment.equipment_code);
+                    return;
+                }
 
-            const markerHtml = `
-                <div class="custom-equipment-marker" style="background-color: ${markerColor};">
-                    <i class="fas fa-${markerIcon}"></i>
-                </div>
-            `;
+                console.log(`Equipment ${equipment.equipment_code} coordinates: x=${equipment.area_x}, y=${equipment.area_y}`);
+                console.log(`Equipment icon_url: ${equipment.icon_url}`);
 
-            const customIcon = L.divIcon({
-                html: markerHtml,
-                className: 'custom-marker-container',
-                iconSize: [30, 30],
-                iconAnchor: [15, 15],
-                popupAnchor: [0, -15]
+                let statusColor = '';
+                let statusText = '';
+
+                // Determine status based on equipment status and last check date
+                const lastCheck = equipment.last_check_date ? new Date(equipment.last_check_date) : null;
+                const daysSinceCheck = lastCheck ? Math.floor((new Date() - lastCheck) / (1000 * 60 * 60 * 24)) : null;
+
+                if (equipment.status === 'maintenance') {
+                    statusColor = '#6c757d';
+                    statusText = 'Under Maintenance';
+                } else if (!lastCheck) {
+                    statusColor = '#6c757d';
+                    statusText = 'Not Checked';
+                } else if (daysSinceCheck > 30) {
+                    statusColor = '#dc3545';
+                    statusText = 'Needs Attention';
+                } else if (daysSinceCheck > 14) {
+                    statusColor = '#ffc107';
+                    statusText = 'Due Soon';
+                } else {
+                    statusColor = '#28a745';
+                    statusText = 'Good';
+                }
+
+                // Create equipment icon - use equipment icon from database if available
+                let equipmentIcon = 'fas fa-fire-extinguisher'; // default icon
+                if (equipment.icon_url) {
+                    // If we have an icon URL from database, we'll use it as background image
+                    const markerHtml = `
+                        <div class="equipment-marker-container" style="position: relative;">
+                            <div class="equipment-icon" style="
+                                width: 32px; 
+                                height: 32px; 
+                                background-image: url('<?= base_url() ?>assets/emergency_tools/img/equipment/${equipment.icon_url}'); 
+                                background-size: cover; 
+                                background-position: center; 
+                                border-radius: 50%; 
+                                border: 3px solid white; 
+                                box-shadow: 0 3px 10px rgba(0, 0, 0, 0.25);
+                                cursor: pointer;
+                                transition: all 0.3s ease;
+                            "></div>
+                            <div class="status-indicator" style="
+                                position: absolute; 
+                                bottom: -2px; 
+                                right: -2px; 
+                                width: 14px; 
+                                height: 14px; 
+                                background-color: ${statusColor}; 
+                                border: 2px solid white; 
+                                border-radius: 50%;
+                                box-shadow: 0 1px 3px rgba(0, 0, 0, 0.3);
+                            "></div>
+                        </div>
+                    `;
+
+                    const customIcon = L.divIcon({
+                        html: markerHtml,
+                        className: 'custom-equipment-marker-container',
+                        iconSize: [36, 36],
+                        iconAnchor: [18, 18],
+                        popupAnchor: [0, -18]
+                    });
+
+                    // Use the same coordinate system as master location
+                    // area_x = x coordinate, area_y = y coordinate (same as master location)
+                    const marker = L.marker([parseFloat(equipment.area_x), parseFloat(equipment.area_y)], { icon: customIcon })
+                        .addTo(map)
+                        .bindPopup(`
+                            <div class="marker-popup">
+                                <h6>${equipment.equipment_name} - ${equipment.equipment_type}</h6>
+                                <p class="mb-1"><strong>Code:</strong> ${equipment.equipment_code}</p>
+                                <p class="mb-1"><strong>Location:</strong> ${equipment.location_name || 'N/A'}</p>
+                                <p class="mb-1"><strong>Area:</strong> ${equipment.area_code || 'N/A'}</p>
+                                <p class="mb-1">
+                                    <strong>Status:</strong> 
+                                    <span class="badge" style="background-color: ${statusColor}; color: white;">${statusText}</span>
+                                </p>
+                                ${lastCheck ?
+                                `<small>Last Check: ${new Date(lastCheck).toLocaleDateString()}</small>` :
+                                '<small>Never checked</small>'
+                            }
+                            </div>
+                        `);
+
+                    // Store equipment data with marker for filtering
+                    marker.equipmentData = equipment;
+                    marker.equipmentType = equipment.equipment_type;
+                    marker.equipmentStatus = statusText.toLowerCase().replace(' ', '_');
+
+                    equipmentMarkers.push(marker);
+                } else {
+                    // Fallback to FontAwesome icon if no equipment icon available
+                    const markerHtml = `
+                        <div class="custom-equipment-marker" style="
+                            background-color: ${statusColor};
+                            width: 32px;
+                            height: 32px;
+                            border-radius: 50%;
+                            display: flex;
+                            align-items: center;
+                            justify-content: center;
+                            color: white;
+                            font-size: 14px;
+                            font-weight: bold;
+                            box-shadow: 0 3px 10px rgba(0, 0, 0, 0.25);
+                            border: 3px solid white;
+                            cursor: pointer;
+                            transition: all 0.3s ease;
+                        ">
+                            <i class="fas fa-fire-extinguisher"></i>
+                        </div>
+                    `;
+
+                    const customIcon = L.divIcon({
+                        html: markerHtml,
+                        className: 'custom-marker-container',
+                        iconSize: [32, 32],
+                        iconAnchor: [16, 16],
+                        popupAnchor: [0, -16]
+                    });
+
+                    // Use the same coordinate system as master location
+                    // area_x = x coordinate, area_y = y coordinate (same as master location)
+                    const marker = L.marker([parseFloat(equipment.area_x), parseFloat(equipment.area_y)], { icon: customIcon })
+                        .addTo(map)
+                        .bindPopup(`
+                            <div class="marker-popup">
+                                <h6>${equipment.equipment_name} - ${equipment.equipment_type}</h6>
+                                <p class="mb-1"><strong>Code:</strong> ${equipment.equipment_code}</p>
+                                <p class="mb-1"><strong>Location:</strong> ${equipment.location_name || 'N/A'}</p>
+                                <p class="mb-1"><strong>Area:</strong> ${equipment.area_code || 'N/A'}</p>
+                                <p class="mb-1">
+                                    <strong>Status:</strong> 
+                                    <span class="badge" style="background-color: ${statusColor}; color: white;">${statusText}</span>
+                                </p>
+                                ${lastCheck ?
+                                `<small>Last Check: ${new Date(lastCheck).toLocaleDateString()}</small>` :
+                                '<small>Never checked</small>'
+                            }
+                            </div>
+                        `);
+
+                    // Store equipment data with marker for filtering
+                    marker.equipmentData = equipment;
+                    marker.equipmentType = equipment.equipment_type;
+                    marker.equipmentStatus = statusText.toLowerCase().replace(' ', '_');
+
+                    equipmentMarkers.push(marker);
+                }
             });
 
-            const marker = L.marker([equipment.y, equipment.x], { icon: customIcon })
-                .addTo(map)
-                .bindPopup(`
-                    <div class="marker-popup">
-                        <h6>${equipment.name}</h6>
-                        <p class="mb-1"><strong>Code:</strong> ${equipment.code}</p>
-                        <p class="mb-1"><strong>Type:</strong> ${equipment.type}</p>
-                        <p class="mb-1"><strong>Status:</strong> 
-                            <span class="badge bg-${equipment.status === 'good' ? 'success' : equipment.status === 'needs_attention' ? 'warning' : equipment.status === 'critical' ? 'danger' : 'secondary'}">
-                                ${equipment.status.replace('_', ' ').replace(/\b\w/g, l => l.toUpperCase())}
-                            </span>
-                        </p>
-                        <small><strong>Inspector:</strong> ${equipment.inspector || 'N/A'}</small>
-                        <div class="text-center mt-2">
-                            <button class="btn btn-sm btn-outline-primary" onclick="viewInspectionDetail(1)">
-                                <i class="fas fa-eye me-1"></i>Detail
-                            </button>
-                        </div>
-                    </div>
-                `);
-
-            equipmentMarkers.push(marker);
-        });
-    }
-
-    // Map control functions
+            console.log(`Added ${equipmentMarkers.length} equipment markers to map`);
+        } else {
+            console.log('No equipment data found');
+        }
+    }    // Map control functions
     function toggleEquipmentMarkers() {
         const btn = document.getElementById('toggleMapping');
+        if (!btn) return;
+
         showEquipmentMarkers = !showEquipmentMarkers;
 
         equipmentMarkers.forEach(marker => {
@@ -716,7 +813,8 @@
 
     function fitToMappingArea() {
         if (mappingOverlay) {
-            map.fitBounds(mappingOverlay.getBounds());
+            const bounds = mappingOverlay.getBounds();
+            map.fitBounds(bounds);
         }
     }
 
@@ -730,39 +828,23 @@
     // Filter equipment by type
     function filterEquipmentByType(filterType) {
         equipmentMarkers.forEach(marker => {
-            const popup = marker.getPopup();
-            if (popup) {
-                const content = popup.getContent();
-                let showMarker = false;
+            let showMarker = false;
 
-                if (filterType === 'all') {
-                    showMarker = true;
-                } else if (filterType === 'AED') {
-                    showMarker = content.includes('AED');
-                } else if (filterType === 'extinguisher') {
-                    showMarker = content.includes('Fire Extinguisher') || content.includes('Extinguisher');
-                } else if (filterType === 'emergency_light') {
-                    showMarker = content.includes('Emergency Light');
-                } else if (filterType === 'critical') {
-                    showMarker = content.includes('bg-danger');
-                } else {
-                    if (filterType === 'good') {
-                        showMarker = content.includes('bg-success');
-                    } else if (filterType === 'needs_attention') {
-                        showMarker = content.includes('bg-warning');
-                    } else if (filterType === 'not_checked') {
-                        showMarker = content.includes('bg-secondary');
-                    }
+            if (filterType === 'all') {
+                showMarker = true;
+            } else if (marker.equipmentType && marker.equipmentType.toLowerCase().includes(filterType.toLowerCase())) {
+                showMarker = true;
+            } else if (marker.equipmentStatus && marker.equipmentStatus === filterType) {
+                showMarker = true;
+            }
+
+            if (showMarker && showEquipmentMarkers) {
+                if (!map.hasLayer(marker)) {
+                    map.addLayer(marker);
                 }
-
-                if (showMarker && showEquipmentMarkers) {
-                    if (!map.hasLayer(marker)) {
-                        map.addLayer(marker);
-                    }
-                } else {
-                    if (map.hasLayer(marker)) {
-                        map.removeLayer(marker);
-                    }
+            } else {
+                if (map.hasLayer(marker)) {
+                    map.removeLayer(marker);
                 }
             }
         });
@@ -1026,28 +1108,78 @@
         btn.disabled = true;
         btn.innerHTML = '<span class="spinner-border spinner-border-sm me-1"></span>Processing...';
 
-        // Simulate API call
-        setTimeout(() => {
-            const approvalModal = bootstrap.Modal.getInstance(document.getElementById('approvalModal'));
-            const detailModal = bootstrap.Modal.getInstance(document.getElementById('inspectionDetailModal'));
-            if (approvalModal) approvalModal.hide();
-            if (detailModal) detailModal.hide();
+        // Send AJAX request to backend
+        const url = `<?= base_url('emergency_tools/report/') ?>${currentApprovalAction}/${currentInspectionId}`;
+        const formData = new FormData();
+        formData.append('notes', notes);
 
-            if (typeof Swal !== 'undefined') {
-                Swal.fire({
-                    icon: 'success',
-                    title: 'Berhasil!',
-                    text: `Inspection berhasil di-${currentApprovalAction}`,
-                    timer: 2000,
-                    showConfirmButton: false
-                }).then(() => {
-                    window.location.reload();
-                });
-            } else {
-                alert(`Inspection berhasil di-${currentApprovalAction}`);
-                window.location.reload();
+        fetch(url, {
+            method: 'POST',
+            body: formData,
+            headers: {
+                'X-Requested-With': 'XMLHttpRequest'
             }
-        }, 1500);
+        })
+            .then(response => response.json())
+            .then(data => {
+                btn.disabled = false;
+                btn.innerHTML = originalText;
+
+                const approvalModal = bootstrap.Modal.getInstance(document.getElementById('approvalModal'));
+                const detailModal = bootstrap.Modal.getInstance(document.getElementById('inspectionDetailModal'));
+                if (approvalModal) approvalModal.hide();
+                if (detailModal) detailModal.hide();
+
+                if (data.success) {
+                    if (typeof Swal !== 'undefined') {
+                        Swal.fire({
+                            icon: 'success',
+                            title: 'Berhasil!',
+                            text: data.message,
+                            timer: 2000,
+                            showConfirmButton: false
+                        }).then(() => {
+                            window.location.reload();
+                        });
+                    } else {
+                        alert(data.message);
+                        window.location.reload();
+                    }
+                } else {
+                    if (typeof Swal !== 'undefined') {
+                        Swal.fire({
+                            icon: 'error',
+                            title: 'Error!',
+                            text: data.message
+                        });
+                    } else {
+                        alert(data.message);
+                    }
+                }
+
+                // Reset variables
+                currentInspectionId = null;
+                currentApprovalAction = null;
+            })
+            .catch(error => {
+                console.error('Error:', error);
+                btn.disabled = false;
+                btn.innerHTML = originalText;
+
+                if (typeof Swal !== 'undefined') {
+                    Swal.fire({
+                        icon: 'error',
+                        title: 'Error!',
+                        text: 'Terjadi kesalahan saat memproses approval'
+                    });
+                } else {
+                    alert('Terjadi kesalahan saat memproses approval');
+                }
+
+                // Reset variables
+                currentInspectionId = null;
+                currentApprovalAction = null;
+            });
     }
 
     // Apply filter function

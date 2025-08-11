@@ -54,10 +54,13 @@ class Inspection_model extends CI_Model
      */
     public function get_all_inspections($limit = null, $offset = null)
     {
-        $this->db->select('insp.*, eq.equipment_code, eq.equipment_type_id, u.name as inspector_name');
+        $this->db->select('insp.*, eq.equipment_code, eq.equipment_type_id, u.name as inspector_name,
+                          et.equipment_name, et.equipment_type, loc.location_name, u.level as inspector_level');
         $this->db->from('tr_inspections insp');
         $this->db->join('tm_equipments eq', 'eq.id = insp.equipment_id', 'left');
         $this->db->join('users u', 'u.id = insp.user_id', 'left');
+        $this->db->join('tm_master_equipment_types et', 'et.id = eq.equipment_type_id', 'left');
+        $this->db->join('tm_locations loc', 'loc.id = eq.location_id', 'left');
         $this->db->order_by('insp.inspection_date', 'DESC');
 
         if ($limit) {
@@ -91,7 +94,7 @@ class Inspection_model extends CI_Model
     /**
      * Update inspection approval
      */
-    public function update_approval($inspection_id, $approval_status, $approved_by)
+    public function update_approval($inspection_id, $approval_status, $approved_by, $notes = null)
     {
         $data = array(
             'approval_status' => $approval_status,
@@ -99,8 +102,20 @@ class Inspection_model extends CI_Model
             'updated_at' => date('Y-m-d H:i:s')
         );
 
+        if ($notes) {
+            $data['notes'] = $notes;
+        }
+
         $this->db->where('id', $inspection_id);
         return $this->db->update('tr_inspections', $data);
+    }
+
+    /**
+     * Get inspection detail by ID
+     */
+    public function get_inspection_detail($inspection_id)
+    {
+        return $this->get_inspection_details($inspection_id);
     }
 
     /**
